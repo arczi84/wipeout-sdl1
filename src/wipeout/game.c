@@ -536,7 +536,7 @@ void game_init(void) {
 	sfx_music_mode(SFX_MUSIC_PAUSED);
 	sfx_music_play(rand_int(0, len(def.music)));
 
-printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
+
 	// System binds; always fixed
 	// Keyboard
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_UP, A_MENU_UP);
@@ -580,8 +580,8 @@ printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 		}
 	}
 
-printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
-	//game_set_scene(GAME_SCENE_INTRO);
+
+	game_set_scene(GAME_SCENE_INTRO);
 }
 
 void game_set_scene(game_scene_t scene) {

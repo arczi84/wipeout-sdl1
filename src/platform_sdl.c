@@ -81,7 +81,7 @@ void platform_pump_events(void) {
 		// Detect ALT+Enter press to toggle fullscreen
 		if (
 			ev.type == SDL_KEYDOWN && 
-			ev.key.keysym.scancode == SDL_SCANCODE_RETURN &&
+			ev.key.keysym.sym == SDL_SCANCODE_RETURN &&
 			(ev.key.keysym.mod & (KMOD_LALT | KMOD_RALT))
 		) {
 			platform_set_fullscreen(!platform_get_fullscreen());
@@ -89,13 +89,27 @@ void platform_pump_events(void) {
 
 		// Input Keyboard
 		else if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
-			int code = ev.key.keysym.scancode;
+			int code = ev.key.keysym.sym;
 			float state = ev.type == SDL_KEYDOWN ? 1.0 : 0.0;
 			if (code >= SDL_SCANCODE_LCTRL && code <= SDL_SCANCODE_RALT) {
 				int code_internal = code - SDL_SCANCODE_LCTRL + INPUT_KEY_LCTRL;
+				printf("key_mod = %d \n", code_internal);
 				input_set_button_state(code_internal, state);
 			}
 			else if (code > 0 && code < INPUT_KEY_MAX) {
+             switch(code )
+                {
+				    case SDLK_UP: code = INPUT_KEY_UP; break;
+                    case SDLK_DOWN: code = INPUT_KEY_DOWN; break;
+                    case SDLK_LEFT: code = INPUT_KEY_LEFT; break;
+                    case SDLK_RIGHT: code = INPUT_KEY_RIGHT; break;
+					case SDLK_RETURN: code = INPUT_KEY_RETURN; break;
+					case SDLK_a: code = INPUT_KEY_A; break;
+					case SDLK_x: code = INPUT_KEY_X; break;
+					case SDLK_z: code = INPUT_KEY_Z; break;
+					case SDLK_s: code = INPUT_KEY_S; break;
+				}
+				printf("key = %d \n", code);
 				input_set_button_state(code, state);
 			}
 		}
@@ -308,7 +322,7 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	void platform_video_init(void) {
 		//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-		const int flags = SDL_SWSURFACE /*| SDL_NOFRAME| SDL_HWPALETTE */| (fullscreen ? SDL_FULLSCREEN : 0);
+		const int flags = SDL_SWSURFACE | (fullscreen ? SDL_FULLSCREEN : 0);
 
 		SDL_WM_SetCaption("Wipeout", "Wipeout");
 
@@ -323,28 +337,42 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	}
 
 	void platform_prepare_frame(void) {
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 		if (screen_size.x != screenbuffer_size.x || screen_size.y != screenbuffer_size.y) {
 			if (screenbuffer) {
 				SDL_DestroyTexture(screenbuffer);
 			}
-			printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
+
+			static uint32_t rmask, gmask, bmask, amask;
+			#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+				rmask = 0xff000000;
+				gmask = 0x00ff0000;
+				bmask = 0x0000ff00;
+				amask = 0x000000ff;
+			#else
+				rmask = 0xff;
+				bmask = 0xFF00;
+				gmask = 0xFF0000;
+				amask = 0xFF000000;
+			#endif
 			//screenbuffer = SDL_CreateTexture(renderer,/* SDL_PIXELFORMAT_ABGR8888*/0, /*SDL_TEXTUREACCESS_STREAMING*/0, screen_size.x, screen_size.y);
-			screenbuffer  = SDL_DisplayFormatAlpha(renderer);
+			screenbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, screen_size.x, screen_size.y, 32, rmask, gmask, bmask, amask);
 			screenbuffer_size = screen_size;
 		}
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 		//SDL_LockTexture(screenbuffer, NULL, &screenbuffer_pixels, &screenbuffer_pitch);
 		SDL_LockSurface(screenbuffer);
 		screenbuffer_pitch = screenbuffer->pitch;// / sizeof(Uint32);
 		screenbuffer_pixels = screenbuffer->pixels;
-		
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 	}
+void drawWhiteRectangle(SDL_Surface* surface, int x, int y, int width, int height) {
+    Uint32 white = SDL_MapRGB(surface->format, 255, 255, 255); // RGB values for white
+    SDL_Rect rect = { x, y, width, height };
+    SDL_FillRect(surface, &rect, white);
+}
 
 	void platform_end_frame(void) {
 		screenbuffer_pixels = NULL;
 		SDL_UnlockTexture(screenbuffer);
+		//drawWhiteRectangle(screenbuffer, 100, 100, 200, 150);
 		SDL_RenderCopy(renderer, screenbuffer, NULL, NULL);
 		SDL_RenderPresent(renderer);
 	}
@@ -457,13 +485,9 @@ int main(int argc, char *argv[]) {
 	while (!wants_to_exit) {
 		platform_pump_events();
 		platform_prepare_frame();
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 		system_update();
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 		platform_end_frame();
-		//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 	}
-
 	system_cleanup();
 	platform_video_cleanup();
 

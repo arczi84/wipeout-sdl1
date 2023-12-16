@@ -44,7 +44,7 @@ void system_update(void) {
 	}
 	
 	render_frame_prepare();
-	//printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
+	
 	game_update();
 
 	render_frame_end();
