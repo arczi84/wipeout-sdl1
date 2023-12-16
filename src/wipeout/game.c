@@ -536,7 +536,7 @@ void game_init(void) {
 	sfx_music_mode(SFX_MUSIC_PAUSED);
 	sfx_music_play(rand_int(0, len(def.music)));
 
-
+printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
 	// System binds; always fixed
 	// Keyboard
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_UP, A_MENU_UP);
@@ -551,7 +551,7 @@ void game_init(void) {
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_X, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_RETURN, A_MENU_START);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_ESCAPE, A_MENU_QUIT);
-
+#if 1
 	// Gamepad
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_DPAD_UP, A_MENU_UP);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_DPAD_DOWN, A_MENU_DOWN);
@@ -568,7 +568,7 @@ void game_init(void) {
 
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_A, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_START, A_MENU_START);
-	
+#endif
 
 	// User defined, loaded from the save struct
 	for (int action = 0; action < len(save.buttons); action++) {
@@ -580,8 +580,8 @@ void game_init(void) {
 		}
 	}
 
-
-	game_set_scene(GAME_SCENE_INTRO);
+printf("function %s in line %d in file %s\n",__FUNCTION__, __LINE__, __FILE__);
+	//game_set_scene(GAME_SCENE_INTRO);
 }
 
 void game_set_scene(game_scene_t scene) {

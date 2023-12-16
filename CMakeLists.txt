@@ -13,15 +13,15 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
 	set(EMSCRIPTEN true)
 endif()
 
-set(platform_options "SDL2" "SOKOL")
-set(PLATFORM "SDL2" CACHE STRING "Graphics platform to handle input/output")
+set(platform_options "SDL1" "SDL2" "SOKOL")
+set(PLATFORM "SDL1" CACHE STRING "Graphics platform to handle input/output")
 set_property(CACHE PLATFORM PROPERTY STRINGS "${platform_options}")
 if(NOT PLATFORM IN_LIST platform_options)
 	message(FATAL_ERROR "PLATFORM must be one of ${platform_options}")
 endif()
 
 set(renderer_options "GL" "GLES2" "SOFTWARE")
-set(RENDERER "GL" CACHE STRING "Graphics rendering backend")
+set(RENDERER "SOFTWARE" CACHE STRING "Graphics rendering backend")
 set_property(CACHE RENDERER PROPERTY STRINGS "${renderer_options}")
 if(NOT RENDERER IN_LIST renderer_options)
 	message(FATAL_ERROR "RENDERER must be one of ${renderer_options}")
@@ -45,7 +45,8 @@ endif()
 
 find_package(OpenGL)
 find_package(GLEW)
-find_package(SDL2)
+#find_package(SDL1)
+#find_package(SDL2)
 
 set(common_src
 	src/wipeout/camera.c
@@ -107,7 +108,9 @@ set(common_src
 	packaging/windows/wipeout.rc
 )
 
-add_executable(wipeout WIN32 ${common_src})
+#add_executable(wipeout WIN32 ${common_src})
+add_executable(wipeout ${common_src})
+
 set_property(TARGET wipeout PROPERTY C_STANDARD 11)
 target_include_directories(wipeout PRIVATE src)
 target_include_directories(wipeout SYSTEM PRIVATE src/libs)
@@ -218,8 +221,11 @@ elseif("${RENDERER}" STREQUAL "SOFTWARE")
 	target_sources(wipeout PRIVATE src/render_software.c)
 endif()
 
-if("${PLATFORM}" STREQUAL SDL2)
+if("${PLATFORM}" STREQUAL SDL1)
 	target_sources(wipeout PRIVATE src/platform_sdl.c)
+	target_link_libraries(wipeout PUBLIC "-lSDL")
+elseif("${PLATFORM}" STREQUAL SDL2)
+	target_sources(wipeout PRIVATE src/platform_sdl2.c)
 	target_link_libraries(wipeout PUBLIC SDL2::Main)
 elseif("${PLATFORM}" STREQUAL SOKOL)
 	target_sources(wipeout PRIVATE src/platform_sokol.c)

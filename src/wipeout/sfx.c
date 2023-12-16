@@ -285,6 +285,7 @@ void sfx_music_open(char *path) {
 }
 
 void sfx_music_play(uint32_t index) {
+	return;
 	error_if(index >= len(def.music), "Invalid music index");
 	if (index == music->track_index) {
 		sfx_music_rewind();

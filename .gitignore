@@ -3,8 +3,12 @@
 
 /wipeout/
 /build/
+/build-x86/
+/src/sdl1_wrapper.c
+/src-org/
 
 /wipegame
 /save.dat
 .DS_STORE
 gamecontrollerdb.txt
+wipegame.info
