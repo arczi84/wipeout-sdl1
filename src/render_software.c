@@ -21,10 +21,17 @@ static int32_t screen_pitch;
 static int32_t screen_ppr;
 static vec2i_t screen_size;
 
-static mat4_t view_mat = mat4_identity();
-static mat4_t mvp_mat = mat4_identity();
+#if GCC_VERSION >= 4
 static mat4_t projection_mat = mat4_identity();
+static mat4_t mvp_mat = mat4_identity();
 static mat4_t sprite_mat = mat4_identity();
+static mat4_t view_mat = mat4_identity();
+#else
+static mat4_t projection_mat; //gcc4
+static mat4_t mvp_mat_3d;
+static mat4_t sprite_mat;
+static mat4_t view_mat;
+#endif
 
 static render_texture_t textures[TEXTURES_MAX];
 static uint32_t textures_len;

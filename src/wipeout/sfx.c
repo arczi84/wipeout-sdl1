@@ -48,7 +48,7 @@ static sfx_data_t *sources;
 static uint32_t num_sources;
 static sfx_t *nodes;
 static music_decoder_t *music;
-static void (*external_mix_cb)(float *, uint32_t len) = NULL;
+static void (*external_mix_cb)(uint32_t *, uint32_t len) = NULL;
 
 void sfx_load(void) {
 	// Init decode buffer for music
@@ -285,6 +285,9 @@ void sfx_music_open(char *path) {
 }
 
 void sfx_music_play(uint32_t index) {
+	return;
+	#warning "music disabled"
+
 	error_if(index >= len(def.music), "Invalid music index");
 	if (index == music->track_index) {
 		sfx_music_rewind();
@@ -301,17 +304,13 @@ void sfx_music_mode(sfx_music_mode_t mode) {
 	music->mode = mode;
 }
 
-
-
-
-
 // Mixing
 
-void sfx_set_external_mix_cb(void (*cb)(float *, uint32_t len)) {
+void sfx_set_external_mix_cb(void (*cb)(uint32_t *, uint32_t len)) {
 	external_mix_cb = cb;
 }
 
-void sfx_stero_mix(float *buffer, uint32_t len) {
+void sfx_stero_mix(uint32_t *buffer, uint32_t len) {
 	if (external_mix_cb) {
 		external_mix_cb(buffer, len);
 		return;
@@ -347,7 +346,8 @@ void sfx_stero_mix(float *buffer, uint32_t len) {
 			sfx->current_pan = sfx->current_pan * 0.999 + sfx->pan * 0.001;
 
 			sfx_data_t *source = &sources[sfx->source];
-			float sample = (float)source->samples[(int)sfx->position] / 32768.0;
+			//float sample = (float)source->samples[(int)sfx->position] / 32768.0;
+			uint32_t sample = (uint32_t)source->samples[(int)sfx->position] / 256.0;//32768.0;
 			left += sample * sfx->current_volume * clamp(1.0 - sfx->current_pan, 0, 1);
 			right += sample * sfx->current_volume * clamp(1.0 + sfx->current_pan, 0, 1);
 

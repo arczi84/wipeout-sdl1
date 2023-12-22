@@ -31,6 +31,7 @@ const struct {
 } speedo = {
 	.width = 121,
 	.skew = 2,
+#if GCC_VERSION >= 4
 	.bars = {
 		{{.x =   6, .y = 12}, .height = 10, .color = rgba( 66,  16,  49, 255)},
 		{{.x =  13, .y = 12}, .height = 10, .color = rgba(115,  33,  90, 255)},
@@ -46,6 +47,9 @@ const struct {
 		{{.x = 110, .y =  1}, .height = 16, .color = rgba(255, 239, 181, 255)},
 		{{.x = 126, .y =  1}, .height = 16, .color = rgba(255, 255, 255, 255)}
 	}
+#else
+	.bars = {13}
+#endif		
 };
 
 static uint16_t speedo_facia_texture;

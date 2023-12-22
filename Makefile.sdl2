@@ -4,7 +4,8 @@ EMCC ?= emcc
 UNAME_S := Msys
 UNAME_O := $(shell uname -o)
 #RENDERER = SOFTWARE
-RENDERER = GL_LEGACY
+RENDERER = GL
+#_LEGACY
 USE_GLX ?= false
 DEBUG ?= true
 USER_CFLAGS ?= -D__MORPHOS__
@@ -50,18 +51,18 @@ ifeq ($(UNAME_S), MorphOS)
 # MorphOS ------------------------------------------------------------------------
 
 else ifeq ($(UNAME_S), AmigaOS)
-	C_FLAGS := $(C_FLAGS)  -noixemul  -O3 -m68040 -mhard-float
+	C_FLAGS := $(C_FLAGS)  -noixemul  -O3 -m68040 
 	C_FLAGS += $(C_FLAGS) -I/mnt/d/amiga-gcc/include -Isrc -Isrc/wipeout/ -Isrc/libs
 	L_FLAGS_SDL =  -L/mnt/d/amiga-gcc2/lib/ -lSDL-gl -lGL  -lm  -noixemul 
 	CC = m68k-amigaos-gcc
 # AmigaOS ------------------------------------------------------------------------
 else ifeq ($(UNAME_S), AmigaOS-gcc4)
 	#PATH=/dev/msys64/usr/local/amiga
-	C_FLAGS := $(C_FLAGS)  -O3 -m68040 -mhard-float
+	C_FLAGS := $(C_FLAGS)  -O3 -m68040 
 	C_FLAGS += $(C_FLAGS) -I/dev/msys64/usr/local/amiga/m68k-amigaos/include/ -Isrc -Isrc/wipeout/ -Isrc/libs
 	ifeq ($(RENDERER), GL_LEGACY)
 		C_FLAGS += -DRENDERER_GL
-		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL.ix -lGL  -lm -ldebug
+		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL_gl -lGL  -lm -ldebug
 		TARGET_NATIVE = wipegame-gcc4-gl
 	else
 		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL -lm040 -ldebug -noixemul
@@ -113,10 +114,21 @@ else ifeq ($(UNAME_S), Linux)
 
 	L_FLAGS_SDL = -lSDL2 -lGL
 	L_FLAGS_SOKOL = -lX11 -lXcursor -pthread -lXi -ldl -lasound
-
-
 # Windows MSYS ------------------------------------------------------------------
 else ifeq ($(UNAME_O), Msys)
+	ifeq ($(GL), RENDERER)
+		L_FLAGS := $(L_FLAGS)  -lglew32 -lopengl32
+	endif
+
+	C_FLAGS := $(C_FLAGS) -DSDL_MAIN_HANDLED -D__MSYS__ -Isrc -Isrc/wipeout/ -Isrc/libs
+	L_FLAGS_SDL = -lSDL2 -lglew32 -lopengl32
+	#L_FLAGS_SOKOL = --pthread -ldl -lasound
+	CC = /d/dev/msys64/mingw64/bin/gcc
+
+# Windows NON-MSYS ---------------------------------------------------------------
+
+# Windows MSYS ------------------------------------------------------------------
+else ifeq ($(UNAME_O), Msys-sdl1)
 	ifeq ($(GL_LEGACY), RENDERER)
 		L_FLAGS := $(L_FLAGS) -lopengl32
 	endif
@@ -181,7 +193,7 @@ COMMON_SRC = \
 COMMON_OBJ = $(patsubst %.c, $(BUILD_DIR)/%.o, $(COMMON_SRC))
 COMMON_DEPS = $(patsubst %.c, $(BUILD_DIR)/%.d, $(COMMON_SRC))
 
-sdl: $(BUILD_DIR)/src/platform_sdl.o
+sdl: $(BUILD_DIR)/src/platform_sdl2.o
 sdl: $(COMMON_OBJ)
 	$(CC) $^ -o $(TARGET_NATIVE) $(L_FLAGS) $(L_FLAGS_SDL)
 

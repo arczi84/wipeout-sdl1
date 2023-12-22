@@ -261,6 +261,7 @@ static const char * const SHADER_POST_FS_CRT = SHADER_SOURCE(
 	}
 
 	void main(){
+
 		vec2 uv = curve(gl_FragCoord.xy / screen_size);
 		vec3 color;
 		float x =  sin(0.3*time+uv.y*21.0)*sin(0.7*time+uv.y*29.0)*sin(0.3+0.33*time+uv.y*31.0)*0.0017;
@@ -665,7 +666,13 @@ void render_set_view_2d(void) {
 
 	render_set_model_mat(&mat4_identity());
 	glUniform3f(prg_game->uniform.camera_pos, 0, 0, 0);
+	#ifdef __MORPHOS__
+	mat4_t mat = mat4_identity();
+	glUniformMatrix4fv(prg_game->uniform.view, 1, false, mat.m);
+	#else
 	glUniformMatrix4fv(prg_game->uniform.view, 1, false, mat4_identity().m);
+	#endif
+	
 	glUniformMatrix4fv(prg_game->uniform.projection, 1, false, projection_mat_2d.m);
 }
 
