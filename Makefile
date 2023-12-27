@@ -3,11 +3,12 @@ EMCC ?= emcc
 #UNAME_S := AmigaOS-gcc4
 UNAME_S := Msys
 UNAME_O := $(shell uname -o)
-#RENDERER = SOFTWARE
+#RENDERER ?= SOFTWARE
 RENDERER = GL_LEGACY
 USE_GLX ?= false
-DEBUG ?= true
-USER_CFLAGS ?= -D__MORPHOS__
+DEBUG ?= false
+USER_CFLAGS ?= -D__MORPHOS__ -DNO_INTRO -w
+SDL_VER	= 
 
 L_FLAGS ?= -lm
 C_FLAGS ?= -std=gnu99 -Wall -Wno-unused-variable -Isrc $(USER_CFLAGS)
@@ -57,14 +58,14 @@ else ifeq ($(UNAME_S), AmigaOS)
 # AmigaOS ------------------------------------------------------------------------
 else ifeq ($(UNAME_S), AmigaOS-gcc4)
 	#PATH=/dev/msys64/usr/local/amiga
-	C_FLAGS := $(C_FLAGS)  -O3 -m68040 -mhard-float
+	C_FLAGS := $(C_FLAGS)  -O3 -fomit-frame-pointer -m68040
 	C_FLAGS += $(C_FLAGS) -I/dev/msys64/usr/local/amiga/m68k-amigaos/include/ -Isrc -Isrc/wipeout/ -Isrc/libs
 	ifeq ($(RENDERER), GL_LEGACY)
 		C_FLAGS += -DRENDERER_GL
-		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL.ix -lGL  -lm -ldebug
+		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL.ix -lGL -ldebug
 		TARGET_NATIVE = wipegame-gcc4-gl
 	else
-		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL -lm040 -ldebug -noixemul
+		L_FLAGS_SDL = -L/dev/msys64/usr/local/amiga/m68k-amigaos/lib -lSDL.ix -lgl_dummy  -lm040 -ldebug 
 		TARGET_NATIVE = wipegame-gcc4
 	endif	
 	CC = /e/usr/local/amiga/bin/m68k-amigaos-gcc-4.exe --sysroot=e:/usr/local/amiga/bin
@@ -119,10 +120,12 @@ else ifeq ($(UNAME_S), Linux)
 else ifeq ($(UNAME_O), Msys)
 	ifeq ($(GL_LEGACY), RENDERER)
 		L_FLAGS := $(L_FLAGS) -lopengl32
+	else ifeq ($(GL), RENDERER)
+		L_FLAGS := $(L_FLAGS) -lopengl32 -lglew32 
 	endif
-#-lglew32 
+
 	C_FLAGS := $(C_FLAGS) -DSDL_MAIN_HANDLED -D__MSYS__ -Isrc -Isrc/wipeout/ -Isrc/libs
-	L_FLAGS_SDL = -lSDL -lopengl32
+	L_FLAGS_SDL = -lSDL$(SDL_VER) $(L_FLAGS)  -lopengl32 -lglew32 
 	L_FLAGS_SOKOL = --pthread -ldl -lasound
 	CC = /d/dev/msys64/mingw64/bin/gcc
 
@@ -181,7 +184,7 @@ COMMON_SRC = \
 COMMON_OBJ = $(patsubst %.c, $(BUILD_DIR)/%.o, $(COMMON_SRC))
 COMMON_DEPS = $(patsubst %.c, $(BUILD_DIR)/%.d, $(COMMON_SRC))
 
-sdl: $(BUILD_DIR)/src/platform_sdl.o
+sdl: $(BUILD_DIR)/src/platform_sdl$(SDL_VER).o
 sdl: $(COMMON_OBJ)
 	$(CC) $^ -o $(TARGET_NATIVE) $(L_FLAGS) $(L_FLAGS_SDL)
 

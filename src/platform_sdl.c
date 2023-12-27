@@ -7,50 +7,25 @@
 #include "utils.h"
 #include "mem.h"
 
-//#undef RENDERER_GL
-//#define RENDERER_SOFTWARE 1
+#ifdef __AMIGA__
+unsigned long __stack = 1024 * 1024;
+static const char *version __attribute__((used)) = "$VER: wipEout 1.0.2 "__DATE__" port by Arczi";
+#endif
+
 
 int width, height;
-bool fullscreen =
-#ifdef AMIGA
-true;
-#else
-false;
-#endif
+bool fullscreen = false;
 
 static uint64_t perf_freq = 0;
 static bool wants_to_exit = false;
-//static SDL_Window *window;
-//static SDL_AudioDeviceID audio_device;
 static SDL_AudioSpec audio_device;
-
-//static SDL_GameController *gamepad;
 static SDL_Joystick *gamepad;
 
-static void (*audio_callback)(/*float*/uint32_t *buffer, uint32_t len) = NULL;
+static void (*audio_callback)(/*float*/int16_t *buffer, uint32_t len) = NULL;
 static char *path_assets = "";
 static char *path_userdata = "";
 static char *temp_path = NULL;
 
-
-uint8_t platform_sdl2_gamepad_map[] = {
-	/*[SDL_CONTROLLER_BUTTON_A] = INPUT_GAMEPAD_A,
-	[SDL_CONTROLLER_BUTTON_B] = INPUT_GAMEPAD_B,
-	[SDL_CONTROLLER_BUTTON_X] = INPUT_GAMEPAD_X,
-	[SDL_CONTROLLER_BUTTON_Y] = INPUT_GAMEPAD_Y,
-	[SDL_CONTROLLER_BUTTON_BACK] = INPUT_GAMEPAD_SELECT,
-	[SDL_CONTROLLER_BUTTON_GUIDE] = INPUT_GAMEPAD_HOME,
-	[SDL_CONTROLLER_BUTTON_START] = INPUT_GAMEPAD_START,
-	[SDL_CONTROLLER_BUTTON_LEFTSTICK] = INPUT_GAMEPAD_L_STICK_PRESS,
-	[SDL_CONTROLLER_BUTTON_RIGHTSTICK] = INPUT_GAMEPAD_R_STICK_PRESS,
-	[SDL_CONTROLLER_BUTTON_LEFTSHOULDER] = INPUT_GAMEPAD_L_SHOULDER,
-	[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER] = INPUT_GAMEPAD_R_SHOULDER,
-	[SDL_CONTROLLER_BUTTON_DPAD_UP] = INPUT_GAMEPAD_DPAD_UP,
-	[SDL_CONTROLLER_BUTTON_DPAD_DOWN] = INPUT_GAMEPAD_DPAD_DOWN,
-	[SDL_CONTROLLER_BUTTON_DPAD_LEFT] = INPUT_GAMEPAD_DPAD_LEFT,
-	[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = INPUT_GAMEPAD_DPAD_RIGHT,
-	[SDL_CONTROLLER_BUTTON_MAX] = INPUT_INVALID*/
-};
 
 uint8_t platform_sdl_gamepad_map[] = {
 	[SDL_CONTROLLER_BUTTON_A] = INPUT_GAMEPAD_A,
@@ -69,13 +44,13 @@ uint8_t platform_sdl_gamepad_map[] = {
 };
 
 uint8_t platform_sdl_axis_map[] = {
-	/*[SDL_CONTROLLER_AXIS_LEFTX] = INPUT_GAMEPAD_L_STICK_LEFT,
+	[SDL_CONTROLLER_AXIS_LEFTX] = INPUT_GAMEPAD_L_STICK_LEFT,
 	[SDL_CONTROLLER_AXIS_LEFTY] = INPUT_GAMEPAD_L_STICK_UP,
 	[SDL_CONTROLLER_AXIS_RIGHTX] = INPUT_GAMEPAD_R_STICK_LEFT,
 	[SDL_CONTROLLER_AXIS_RIGHTY] = INPUT_GAMEPAD_R_STICK_UP,
 	[SDL_CONTROLLER_AXIS_TRIGGERLEFT] = INPUT_GAMEPAD_L_TRIGGER,
 	[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] = INPUT_GAMEPAD_R_TRIGGER,
-	[SDL_CONTROLLER_AXIS_MAX] = INPUT_INVALID*/
+	[SDL_CONTROLLER_AXIS_MAX] = INPUT_INVALID
 };
 
 
@@ -109,14 +84,14 @@ void platform_pump_events(void) {
 
 		// Input Keyboard
 		else if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
-			printf("key sdl1 = %d \n", ev.key.keysym.sym);
-			printf("scancode sdl1 = %d \n", ev.key.keysym.scancode);
-			int code = keycode_to_scancode[ev.key.keysym.sym]; //ev.key.keysym.sym;
+			//printf("key sdl1 = %d \n", ev.key.keysym.sym);
+			//printf("scancode sdl1 = %d \n", ev.key.keysym.scancode);
+			int code = keycode_to_scancode[ev.key.keysym.sym]; //ev.key.keysym.scancode;
 			float state = ev.type == SDL_KEYDOWN ? 1.0 : 0.0;
 
 			if (code >= SDL_SCANCODE_LCTRL && code <= SDL_SCANCODE_RALT) {
 				int code_internal = code - SDL_SCANCODE_LCTRL + INPUT_KEY_LCTRL;
-				printf("key_mod = %d \n", code_internal);
+				//printf("key_mod = %d \n", code_internal);
 				input_set_button_state(code_internal, state);
 			}
 			else if (code > 0 && code < INPUT_KEY_MAX) {
@@ -134,7 +109,7 @@ void platform_pump_events(void) {
 					case SDLK_ESCAPE: SDL_Quit(); break;
 					default: break;
 				}*/
-				printf("key = %d \n", code);
+				//printf("key = %d \n", code);
 				input_set_button_state(code, state);
 			}
 		}
@@ -154,7 +129,7 @@ void platform_pump_events(void) {
 			}
 		}
 
-	#endif				
+#endif				
 		// Input Gamepad Buttons
 		else if (
 			ev.type == SDL_CONTROLLERBUTTONDOWN || 
@@ -173,10 +148,13 @@ void platform_pump_events(void) {
 #if 1
 		// Input Gamepad Axis
 		else if (ev.type == SDL_CONTROLLERAXISMOTION) {
-			float state = (float)ev.caxis.value / 32767.0;
-			printf("Gamepad axis %d pressed\n", ev.caxis.value);
+			float state = (float)ev.caxis.value  / 32767.0f;
+			printf("Gamepad axis %d pressed\n", ev.caxis.axis);
+			printf("Gamepad axis.value %d pressed\n", ev.caxis.value);
+			printf("Gamepad state %f pressed\n", state);
 			if (ev.caxis.axis < SDL_CONTROLLER_AXIS_MAX) {
 				int code = platform_sdl_axis_map[ev.caxis.axis];
+							printf("Gamepad key = %d \n", code);
 				if (
 					code == INPUT_GAMEPAD_L_TRIGGER || 
 					code == INPUT_GAMEPAD_R_TRIGGER
@@ -223,7 +201,7 @@ void platform_pump_events(void) {
                         break;
                     }
 #endif					
-
+#if 0
 		// Mouse buttons
 		else if (
 			ev.type == SDL_MOUSEBUTTONDOWN ||
@@ -241,7 +219,7 @@ void platform_pump_events(void) {
 				input_set_button_state(button, state);
 			}
 		}
-#if 0
+
 		// Mouse wheel
 		else if (ev.type == SDL_MOUSEWHEEL) {
 			button_t button = ev.wheel.y > 0 
@@ -250,12 +228,12 @@ void platform_pump_events(void) {
 			input_set_button_state(button, 1.0);
 			input_set_button_state(button, 0.0);
 		}
-#endif
+
 		// Mouse move
 		else if (ev.type == SDL_MOUSEMOTION) {
 			input_set_mouse_pos(ev.motion.x, ev.motion.y);
 		}
-
+#endif
 		// Window Events
 		if (ev.type == SDL_QUIT) {
 			wants_to_exit = true;
@@ -271,10 +249,10 @@ void platform_pump_events(void) {
 		}*/
 	}
 }
-
-double platform_now(void) {
+//double == fast
+double  platform_now() {
 	uint64_t perf_counter = SDL_GetPerformanceCounter();
-	return (double)perf_counter / (double)perf_freq;
+	return (double )perf_counter / (double )perf_freq;
 }
 
 bool platform_get_fullscreen(void) {
@@ -299,14 +277,14 @@ void platform_set_fullscreen(bool fullscreen) {
 
 void platform_audio_callback(void* userdata, uint8_t* stream, int len) {
 	if (audio_callback) {
-		audio_callback(/*(float *)*/(uint32_t*)stream, len/sizeof(uint32_t/*float*/));
+		audio_callback(/*(float *)*/(int16_t*)stream, len/sizeof(int16_t));
 	}
 	else {
 		memset(stream, 0, len);
 	}
 }
 
-void platform_set_audio_mix_cb(void (*cb)(uint32_t *buffer, uint32_t len)) {
+void platform_set_audio_mix_cb(void (*cb)(int16_t *buffer, uint32_t len)) {
 	audio_callback = cb;
 	SDL_PauseAudioDevice(audio_device, 0);
 }
@@ -332,8 +310,7 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 }
 
 #if defined(RENDERER_GL_LEGACY) // ----------------------------------------------------
-	#define PLATFORM_WINDOW_FLAGS SDL_OPENGL//SDL_WINDOW_OPENGL
-	//SDL_GLContext platform_gl;
+	#define PLATFORM_WINDOW_FLAGS SDL_OPENGL
 
 	void platform_video_init(void) {
 		#if defined(USE_GLES2)
@@ -342,14 +319,11 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 		#endif
 
-		//platform_gl = SDL_GL_CreateContext(window);
-		//SDL_GL_SetSwapInterval(1);
-
 		static SDL_Surface *renderer;
 		const int flags = SDL_OPENGL| (fullscreen ? SDL_FULLSCREEN : 0);
 		SDL_WM_SetCaption("WipEout", "WipEout");
 
-		renderer = SDL_SetVideoMode(SYSTEM_WINDOW_WIDTH, SYSTEM_WINDOW_HEIGHT, 32, flags);
+		renderer = SDL_SetVideoMode(window_width, window_height, 16, flags);
 	}
 
 	void platform_prepare_frame(void) {
@@ -357,43 +331,39 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	}
 
 	void platform_video_cleanup(void) {
-		//SDL_GL_DeleteContext(platform_gl);
 	}
 
 	void platform_end_frame(void) {
-		//SDL_GL_SwapWindow(window);
 		SDL_GL_SwapBuffers();
+#ifdef AMIGA		
+		WaitTOF();
+#endif
 	}
 
 	vec2i_t platform_screen_size(void) {
-		int width, height;
-		//SDL_GL_GetDrawableSize(window, &width, &height);
-		width = SYSTEM_WINDOW_WIDTH;
-		height = SYSTEM_WINDOW_HEIGHT;
-		return vec2i(width, height);
+		return vec2i(window_width, window_height);
 	}
 
 
 #elif defined(RENDERER_SOFTWARE) // ----------------------------------------------
 	#define PLATFORM_WINDOW_FLAGS 0
-	//static SDL_Renderer *renderer;
 	static SDL_Surface *renderer;
-	//static SDL_Texture *screenbuffer = NULL;
 	static SDL_Surface *screenbuffer = NULL;
 	static void *screenbuffer_pixels = NULL;
 	static int screenbuffer_pitch;
-	static vec2i_t screenbuffer_size = vec2i(0, 0); //gcc4
-	static vec2i_t screen_size = vec2i(0, 0); //gcc4
-
+#ifdef __AMIGA__
+	static vec2i_t screenbuffer_size; //gcc4
+	static vec2i_t screen_size;
+#else
+	static vec2i_t screenbuffer_size = vec2i(0, 0); 
+	static vec2i_t screen_size = vec2i(0, 0);
+#endif
 
 	void platform_video_init(void) {
-		//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-		//const int flags = SDL_HWSURFACE|SDL_DOUBLEBUF | (fullscreen ? SDL_FULLSCREEN : 0);
-		const int flags = SDL_SWSURFACE|SDL_DOUBLEBUF | (fullscreen ? SDL_FULLSCREEN : 0);
+		const int flags = SDL_SWSURFACE/*|SDL_DOUBLEBUF*/ | (fullscreen ? SDL_FULLSCREEN : 0);
 		SDL_WM_SetCaption("WipEout", "WipEout");
 
-		renderer = SDL_SetVideoMode(SYSTEM_WINDOW_WIDTH, SYSTEM_WINDOW_HEIGHT, 32, flags);
+		renderer = SDL_SetVideoMode(window_width, window_height, 32, flags);
 	}
 
 	void platform_video_cleanup(void) {
@@ -422,13 +392,10 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 				amask = 0xFF000000;
 			#endif
 
-			//screenbuffer = SDL_CreateTexture(renderer,/* SDL_PIXELFORMAT_ABGR8888*/0, /*SDL_TEXTUREACCESS_STREAMING*/0, screen_size.x, screen_size.y);
-			//screenbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, screen_size.x, screen_size.y, 32, rmask, gmask, bmask, amask);
 			screenbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, screen_size.x, screen_size.y, 32, bmask, gmask, rmask, amask);
 			
 			screenbuffer_size = screen_size;
 		}
-		//SDL_LockTexture(screenbuffer, NULL, &screenbuffer_pixels, &screenbuffer_pitch);
 		SDL_LockSurface(screenbuffer);
 		screenbuffer_pitch = screenbuffer->pitch;
 		screenbuffer_pixels = screenbuffer->pixels;
@@ -447,13 +414,8 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	}
 
 	vec2i_t platform_screen_size(void) {
-		int width, height;
-		//SDL_GetWindowSize(window, &width, &height);
-		width = renderer->w;
-		height = renderer->h;
-		// float aspect = (float)width / (float)height;
-		// screen_size = vec2i(240 * aspect, 240);
-		screen_size = vec2i(width, height);
+
+		screen_size = vec2i(renderer->w, renderer->h);
 		return screen_size;
 	}
 
@@ -461,13 +423,39 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	#error "Unsupported renderer for platform SDL"
 #endif
 
-#if GCC_VERSION >= 4
+#ifndef AMIGA// GCC_VERSION >= 4
 int WinMain
 #else
 int main
 #endif
 (int argc, char *argv[]) {
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO| SDL_INIT_JOYSTICK);
+
+	window_width = 640;
+	window_height = 360;
+
+    // Sprawdzenie liczby argumentów
+    if (argc >= 4) {
+        // Ustawienie fullscreen
+        if (strcmp(argv[1], "-fullscreen") == 0) {
+            fullscreen = true;
+        }
+
+        // Ustawienie szerokości
+        window_width = atoi(argv[2]);
+
+        // Ustawienie wysokości
+        window_height = atoi(argv[3]);
+    } else {
+        // Informacja o poprawnym użyciu programu
+        printf("Usage: %s [-fullscreen] [width] [height]\n", argv[0]);
+        //return 1; // Zakończ program z kodem błędu
+    }
+
+    // Tutaj możesz użyć wartości fullscreen, width i height do konfiguracji programu
+    printf("Fullscreen: %s\n", (fullscreen ? "Yes" : "No"));
+    printf("Width: %d\n", window_width);
+    printf("Height: %d\n", window_height);
 
 	// Figure out the absolute asset and userdata paths. These may either be
 	// supplied at build time through -DPATH_ASSETS=.. and -DPATH_USERDATA=..
@@ -488,7 +476,7 @@ int main
 	#ifdef PATH_USERDATA
 		path_userdata = TOSTRING(PATH_USERDATA);
 	#else
-		sdl_path_userdata = SDL_GetPrefPath("phoboslab", "wipeout");
+		sdl_path_userdata = SDL_GetPrefPath("phoboslab", "data");
 		if (sdl_path_userdata) {
 			path_userdata = sdl_path_userdata;
 		}
@@ -515,38 +503,21 @@ int main
 	gamepad = SDL_JoystickOpen(0);
 
 	if (gamepad) {
-		fprintf(stdout, "Using joystick '%s'\n", SDL_JoystickName(1));
+		fprintf(stdout, "Using joystick '%s'\n", SDL_JoystickName(0));
 		fprintf(stdout, "Number of Buttons: %d\n", SDL_JoystickNumButtons(gamepad));
 	}
 	perf_freq = SDL_GetPerformanceFrequency();
-/*
-	audio_device = SDL_OpenAudioDevice(NULL, 0, &(SDL_AudioSpec){
-		.freq = 44100,
-		.format = AUDIO_S16SYS,
-		.channels = 2,
-		.samples = 1024,
-		.callback = platform_audio_callback
-	}, NULL, 0);
-*/
 	SDL_AudioSpec audio_device;
 	memset(&audio_device, 0, sizeof(audio_device));
 	audio_device.freq = 44100;
 	audio_device.format = AUDIO_S16SYS;
 	audio_device.channels = 2;
-	audio_device.samples = 1024;
+	audio_device.samples = 2048;
 	audio_device.callback = platform_audio_callback;
 	audio_device.userdata = NULL;
 	if (SDL_OpenAudio(&audio_device, 0) == 0) {
 		SDL_PauseAudio(0);
 	}
-/*
-	window = SDL_CreateWindow(
-		SYSTEM_WINDOW_NAME,
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		SYSTEM_WINDOW_WIDTH, SYSTEM_WINDOW_HEIGHT,
-		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | PLATFORM_WINDOW_FLAGS | SDL_WINDOW_ALLOW_HIGHDPI
-	);
-*/
 
 	platform_video_init();
 	system_init();
@@ -560,17 +531,16 @@ int main
 	system_cleanup();
 	platform_video_cleanup();
 
-	//SDL_DestroyWindow(window);
 
 	if (gamepad) {
 		SDL_GameControllerClose(gamepad);
 	}
 
 	if (sdl_path_assets) {
-		SDL_free(sdl_path_assets);
+		//SDL_free(sdl_path_assets); //crash
 	}
 	if (sdl_path_userdata) {
-		SDL_free(sdl_path_userdata);
+		//SDL_free(sdl_path_userdata); //crash
 	}
 
 	SDL_CloseAudioDevice(audio_device);

@@ -551,7 +551,7 @@ void game_init(void) {
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_X, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_RETURN, A_MENU_START);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_ESCAPE, A_MENU_QUIT);
-#if 1
+
 	// Gamepad
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_DPAD_UP, A_MENU_UP);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_DPAD_DOWN, A_MENU_DOWN);
@@ -568,7 +568,7 @@ void game_init(void) {
 
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_A, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_START, A_MENU_START);
-#endif
+	
 
 	// User defined, loaded from the save struct
 	for (int action = 0; action < len(save.buttons); action++) {
@@ -580,8 +580,11 @@ void game_init(void) {
 		}
 	}
 
-
+#if defined(NO_INTRO)
+	game_set_scene(GAME_SCENE_TITLE);
+#else
 	game_set_scene(GAME_SCENE_INTRO);
+#endif
 }
 
 void game_set_scene(game_scene_t scene) {
@@ -598,7 +601,7 @@ void game_reset_championship(void) {
 }
 
 void game_update(void) {
-	double frame_start_time = platform_now();
+	scalar_t frame_start_time = platform_now();
 
 	int sh = render_size().y;
 	int scale = max(1, sh >=  720 ? sh / 360 : sh / 240);
@@ -635,14 +638,14 @@ void game_update(void) {
 		// FIXME: use a text based format?
 		// FIXME: this should probably run async somewhere
 		save.is_dirty = false;
-		platform_store_userdata("save.dat", &save, sizeof(save_t));
-		printf("wrote save.dat\n");
+		platform_store_userdata("save.dat", &save, sizeof(save_t)); 
+		//printf("wrote save.dat\n");
 	}
 
-	double now = platform_now();
+	scalar_t now = platform_now();
 	g.frame_time = now - frame_start_time;
 	if (g.frame_time > 0) {
-		g.frame_rate = ((double)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
+		g.frame_rate = ((scalar_t)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
 	}
 }
 

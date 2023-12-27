@@ -26,13 +26,13 @@ void *realloc_dummmy(void *p, size_t sz) {
 static plm_t *plm;
 static rgba_t *frame_buffer;
 static int16_t texture;
-static uint32_t *audio_buffer;
+static int16_t *audio_buffer;
 static int audio_buffer_read_pos;
 static int audio_buffer_write_pos;
 
 static void video_cb(plm_t *plm, plm_frame_t *frame, void *user);
 static void audio_cb(plm_t *plm, plm_samples_t *samples, void *user);
-static void audio_mix(uint32_t *samples, uint32_t len);
+static void audio_mix(int16_t *samples, uint32_t len);
 static void intro_end(void);
 
 void intro_init(void) {
@@ -57,7 +57,7 @@ void intro_init(void) {
 	texture = render_texture_create(w, h, frame_buffer);
 
 	sfx_set_external_mix_cb(audio_mix);
-	audio_buffer = mem_bump(INTRO_AUDIO_BUFFER_LEN * sizeof(uint32_t) * 2);
+	audio_buffer = mem_bump(INTRO_AUDIO_BUFFER_LEN * sizeof(int16_t) * 2);
 	audio_buffer_read_pos = 0;
 	audio_buffer_write_pos = 0;
 }
@@ -87,7 +87,7 @@ static void audio_cb(plm_t *plm, plm_samples_t *samples, void *user) {
 	}
 }
 
-static void audio_mix(uint32_t *samples, uint32_t len) {
+static void audio_mix(int16_t *samples, uint32_t len) {
 	int i;
 	for (i = 0; i < len && audio_buffer_read_pos < audio_buffer_write_pos; i++) {
 		samples[i] = audio_buffer[audio_buffer_read_pos % INTRO_AUDIO_BUFFER_LEN];

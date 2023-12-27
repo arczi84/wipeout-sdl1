@@ -11,7 +11,7 @@ static bool wants_to_exit = false;
 static SDL_Window *window;
 static SDL_AudioDeviceID audio_device;
 static SDL_GameController *gamepad;
-static void (*audio_callback)(uint32_t *buffer, uint32_t len) = NULL;
+static void (*audio_callback)(float *buffer, uint32_t len) = NULL;
 static char *path_assets = "";
 static char *path_userdata = "";
 static char *temp_path = NULL;
@@ -215,14 +215,14 @@ void platform_set_fullscreen(bool fullscreen) {
 
 void platform_audio_callback(void* userdata, uint8_t* stream, int len) {
 	if (audio_callback) {
-		audio_callback((uint32_t *)stream, len/sizeof(uint32_t));
+		audio_callback((float *)stream, len/sizeof(float));
 	}
 	else {
 		memset(stream, 0, len);
 	}
 }
 
-void platform_set_audio_mix_cb(void (*cb)(uint32_t *buffer, uint32_t len)) {
+void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 	audio_callback = cb;
 	SDL_PauseAudioDevice(audio_device, 0);
 }
@@ -247,7 +247,7 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	return file_store(path, bytes, len);
 }
 
-#if defined(RENDERER_GL) // ----------------------------------------------------
+#if defined(RENDERER_GL) || defined(RENDERER_GL_LEGACY)// ----------------------------------------------------
 	#define PLATFORM_WINDOW_FLAGS SDL_WINDOW_OPENGL
 	SDL_GLContext platform_gl;
 
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
 
 	audio_device = SDL_OpenAudioDevice(NULL, 0, &(SDL_AudioSpec){
 		.freq = 44100,
-		.format = AUDIO_S16SYS,//AUDIO_F32SYS,
+		.format = AUDIO_F32SYS,
 		.channels = 2,
 		.samples = 1024,
 		.callback = platform_audio_callback

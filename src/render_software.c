@@ -21,16 +21,16 @@ static int32_t screen_pitch;
 static int32_t screen_ppr;
 static vec2i_t screen_size;
 
-#if GCC_VERSION >= 4
-static mat4_t projection_mat = mat4_identity();
-static mat4_t mvp_mat = mat4_identity();
-static mat4_t sprite_mat = mat4_identity();
-static mat4_t view_mat = mat4_identity();
-#else
-static mat4_t projection_mat; //gcc4
-static mat4_t mvp_mat_3d;
-static mat4_t sprite_mat;
+#ifdef __AMIGA__
 static mat4_t view_mat;
+static mat4_t mvp_mat;
+static mat4_t projection_mat;
+static mat4_t sprite_mat;
+#else
+static mat4_t view_mat = mat4_identity();
+static mat4_t mvp_mat = mat4_identity();
+static mat4_t projection_mat = mat4_identity();
+static mat4_t sprite_mat = mat4_identity();
 #endif
 
 static render_texture_t textures[TEXTURES_MAX];

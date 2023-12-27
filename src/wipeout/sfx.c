@@ -171,8 +171,8 @@ sfx_t *sfx_get_node(sfx_source_t source_index) {
 
 	flags_set(sfx->flags, SFX_NONE);
 	sfx->source = source_index;
-	sfx->volume = 1;
-	sfx->current_volume = 1;
+	sfx->volume = 0.1;
+	sfx->current_volume = 0.1;
 	sfx->pan = 0;
 	sfx->current_pan = 0;
 	sfx->position = 0;
@@ -285,9 +285,6 @@ void sfx_music_open(char *path) {
 }
 
 void sfx_music_play(uint32_t index) {
-	return;
-	#warning "music disabled"
-
 	error_if(index >= len(def.music), "Invalid music index");
 	if (index == music->track_index) {
 		sfx_music_rewind();
@@ -306,11 +303,11 @@ void sfx_music_mode(sfx_music_mode_t mode) {
 
 // Mixing
 
-void sfx_set_external_mix_cb(void (*cb)(uint32_t *, uint32_t len)) {
+void sfx_set_external_mix_cb(void (*cb)(int16_t *, uint32_t len)) {
 	external_mix_cb = cb;
 }
 
-void sfx_stero_mix(uint32_t *buffer, uint32_t len) {
+void sfx_stero_mix(int16_t *buffer, uint32_t len) {
 	if (external_mix_cb) {
 		external_mix_cb(buffer, len);
 		return;
@@ -346,8 +343,7 @@ void sfx_stero_mix(uint32_t *buffer, uint32_t len) {
 			sfx->current_pan = sfx->current_pan * 0.999 + sfx->pan * 0.001;
 
 			sfx_data_t *source = &sources[sfx->source];
-			//float sample = (float)source->samples[(int)sfx->position] / 32768.0;
-			uint32_t sample = (uint32_t)source->samples[(int)sfx->position] / 256.0;//32768.0;
+			float sample = (float)source->samples[(int)sfx->position];// / 32768.0;
 			left += sample * sfx->current_volume * clamp(1.0 - sfx->current_pan, 0, 1);
 			right += sample * sfx->current_volume * clamp(1.0 + sfx->current_pan, 0, 1);
 
@@ -382,8 +378,8 @@ void sfx_stero_mix(uint32_t *buffer, uint32_t len) {
 				}
 				music_src_index = 0;
 			}
-			left += (music->sample_data[music_src_index++] / 32768.0) * save.music_volume;
-			right += (music->sample_data[music_src_index++] / 32768.0) * save.music_volume;
+			left += (music->sample_data[music_src_index++]  /*/ 32768*/) * save.music_volume;
+			right +=  (music->sample_data[music_src_index++]  /*/ 32768*/) * save.music_volume;
 			music->sample_data_pos++;
 		}
 

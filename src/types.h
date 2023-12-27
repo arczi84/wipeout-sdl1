@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Dreamcast
+#if defined(_arch_dreamcast) || defined(__PSP__) || defined(__AMIGA__)
+typedef float scalar_t;
+#else
+typedef double scalar_t;
+#endif
+
 typedef struct rgba_t {
 	uint8_t r, g, b, a;
 } rgba_t;
@@ -30,16 +37,7 @@ typedef union {
 	float cols[4][4];
 } mat4_t;
 
-typedef struct {
-	vec3_t pos;
-	vec2_t uv;
-	rgba_t color;
-} vertex_t;
-
-typedef struct {
-	vertex_t vertices[3];
-} tris_t;
-
+#include "render_gl_legacy_types.h"
 
 #define rgba(R, G, B, A) ((rgba_t){.r = R, .g = G, .b = B, .a = A})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})

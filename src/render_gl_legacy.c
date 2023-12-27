@@ -71,7 +71,7 @@ static vec2i_t screen_size;
 
 static render_blend_mode_t blend_mode = RENDER_BLEND_NORMAL;
 
-#if GCC_VERSION >= 4
+#ifndef AMIGA// 1//GCC_VERSION >= 4
 static mat4_t projection_mat_2d = mat4_identity();
 static mat4_t projection_mat_3d = mat4_identity();
 static mat4_t sprite_mat = mat4_identity();
@@ -543,6 +543,7 @@ uint32_t upper_power_of_two(uint32_t v)
     v++;
     return v;
 }
+#define GL_CLAMP_TO_EDGE                        0x812F
 
 uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	error_if(textures_len >= TEXTURES_MAX, "TEXTURES_MAX reached");
