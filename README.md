@@ -10,13 +10,10 @@ More info in my blog: https://phoboslab.org/log/2023/08/rewriting-wipeout
 
 # Building
 
-The Wipeout rewrite supports two different platform-backends:
-[SDL2](https://github.com/libsdl-org/SDL) and
-[Sokol](https://github.com/floooh/sokol).
-The only difference in features is that the SDL2 backend supports game controllers 
-(joysticks, gamepads) and uses OpenGL 2.x, while the Sokol backend does not
-support controllers and uses OpenGL 3.3.
-The Sokol backend is also only supported on macOS, Linux, Windows and Emscripten.
+This fork of Wipeout rewrite supports SDL 1.2 platform-backends:
+[SDL1](https://github.com/libsdl-org/SDL).
+The SDL1 backend supports game controllers 
+(joysticks, gamepads) and uses OpenGL 1.2, 
 
 For Linux & Unix-likes a simple Makefile is a provided. Additionally, this
 project can be build with [CMake](https://cmake.org) for all platforms.
@@ -30,7 +27,7 @@ Building on Linux should be as simple as installing CMake, GLEW, and the
 necessary platform libraries from your package manager.
 For brevity, this guide assumes that the necessary development tools (i.e. a C
 compiler, make) have already been installed.
-The SDL2 platform should only require the `sdl2` library and headers, whilst the
+The SDL1.2 platform should only require the `SDL1.2` library and headers, whilst the
 Sokol platform requires the library/headers for:
 
 - `X11`
@@ -44,53 +41,10 @@ popluar \*nix OSs:
 ### Debian/Ubuntu
 
 ```sh
-apt install cmake libglew-dev
-# For SDL2
-apt install libsdl2-dev
-# For Sokol
-apt install libx11-dev libxcursor-dev libxi-dev libasound2-dev
-```
+apt install cmake libopengl-dev
+# For SDL1
+apt install libsdl12-dev
 
-### Fedora
-
-```sh
-dnf install cmake glew-devel
-# For SDL2
-dnf install SDL2-devel
-# For Sokol
-dnf install libx11-devel libxcursor-devel libxi-devel alsa-lib-devel
-```
-
-### Arch Linux
-
-```sh
-pacman -S cmake glew
-# For SDL2
-pacman -S sdl2
-# For Sokol
-pacman install libx11 libxcursor libxi alsa-lib
-```
-
-### OpenSUSE
-
-```sh
-zypper install cmake glew-devel
-# For SDL2
-zypper install SDL2-devel
-# For Sokol
-zypper install libx11-devel libxcursor-devel libxi-devel alsa-lib-devel
-```
-
-### FreeBSD
-
-```sh
-pkg install cmake sdl2
-```
-
-### OpenBSD
-
-```sh
-pkg_add cmake sdl2
 ```
 
 Note that the Sokol platform is not supported on the BSDs, since the Sokol
@@ -99,10 +53,10 @@ headers themselves do not support these Operating Systems.
 With the packages installed, you can now setup and build:
 
 ```sh
-# With make for SDL2 backend
+# With make for SDL1 backend
 make sdl
 
-# With make for SDL2 with GLX backend (for legacy NVIDIA and perhaps others)
+# With make for SDL1 with GLX backend (for legacy NVIDIA and perhaps others)
 USE_GLX=true make sdl
 
 # With make for Sokol backend
@@ -115,7 +69,7 @@ cmake --build path/to/build-dir
 
 ## macOS
 
-Currently only the SDL2 platform works.
+Currently only the SDL1.2 platform works.
 macOS is very picky about the GLSL shader version when compiling with Sokol and
 OpenGL3.3; it shouldn't be too difficult to get it working, but will probably
 require a bunch of `#ifdefs` for SDL and WASM.
@@ -127,8 +81,8 @@ Using homebrew, you can install the required software with the following:
 
 ```sh
 brew install cmake
-# For SDL2
-brew install sdl2
+# For SDL1.2
+brew install SDL1.2
 # Nothing extra needed for Sokol
 ```
 
@@ -136,7 +90,7 @@ With the packages installed, you can now setup and build:
 
 ```sh
 cmake -S path/to/wipeout-rewrite -B path/to/build-dir \
-	-DCMAKE_PREFIX_PATH="$(brew --prefix sdl2)"
+	-DCMAKE_PREFIX_PATH="$(brew --prefix SDL1.2)"
 cmake --build path/to/build-dir
 ```
 
@@ -153,7 +107,7 @@ the time of writing) with the "Desktop development with C++" option selected.
 Also make sure to select "Clang C++ compiler for Windows" in "Individual
 Components" if it hasn't been already.
 
-The next step is to acquire development versions of SDL2 and GLEW.
+The next step is to acquire development versions of SDL1.2 and GLEW.
 The easiest way is to install [vcpkg](https://vcpkg.io) and let Visual Studio's
 integration build and install it for you.
 Follow the [vcpkg "Getting Started" guide](https://vcpkg.io/en/getting-started)
@@ -180,13 +134,13 @@ others work just as well.
 Install the following packages using `pacman`:
 
 ```sh
-pacman -S mingw-w64-ucrt-x86_64-{toolchain,cmake,SDL2,glew}
+pacman -S mingw-w64-ucrt-x86_64-{toolchain,cmake,SDL1.2,glew}
 ```
 
 With the packages installed, you can now setup and build:
 
 ```sh
-# With make for SDL2 backend
+# With make for SDL1.2 backend
 make sdl
 
 # With make for Sokol backend
@@ -222,8 +176,8 @@ The following is a table for project specific build flags using CMake:
 
 | Flag             | Description                                                                             | Options                                                                              | Default                                                                                     |
 |------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `PLATFORM`       | The platform to build for.                                                              | `SDL2`, `SOKOL`                                                                      | `SDL2`                                                                                      |
-| `RENDERER`       | Graphics renderer.                                                                      | `GL` for OpenGL 3, `GLES2` for OpenGL ES 2, `SOFTWARE` for a pure software renderer. | `GL`                                                                                        |
+| `PLATFORM`       | The platform to build for.                                                              | `SDL`                                                                    	    | `SDL`                                                                                    |
+| `RENDERER`       | Graphics renderer.                                                                      | `LEGACY_GL` for OpenGL 1.2, `SOFTWARE` for a pure software renderer. 		    | `GL`                                                                                        	   
 | `USE_GLVND`      | Link against the OpenGL Vendor Neutral Dispatch libraries.                              | `ON`, `OFF`                                                                          | `ON`, falling back to `OFF` if the libraries aren't found or an OpenGL renderer isn't used. |
 | `MINIMAL_BUNDLE` | Do not include the music/intro video when building for the web.                         | `ON`, `OFF`                                                                          | `OFF`                                                                                       |
 | `PATH_ASSETS`    | Set a static path where the game assets are loaded from.                                | Any valid filesystem path.                                                           | Unset                                                                                       |
