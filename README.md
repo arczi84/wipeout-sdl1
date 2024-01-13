@@ -50,7 +50,7 @@ With the packages installed, you can now setup and build:
 # With make for SDL1 backend
 make sdl
 
-# With make for SDL1 with GLX backend (for legacy NVIDIA and perhaps others)
+# With make for SDL1 with GL backend (for legacy OpenGL 1.2)
 RENDERER=LEGACY_GL make sdl
 
 # With cmake
@@ -79,7 +79,7 @@ the time of writing) with the "Desktop development with C++" option selected.
 Also make sure to select "Clang C++ compiler for Windows" in "Individual
 Components" if it hasn't been already.
 
-The next step is to acquire development versions of SDL1.2 and GLEW.
+The next step is to acquire development versions of SDL1.2.
 The easiest way is to install [vcpkg](https://vcpkg.io) and let Visual Studio's
 integration build and install it for you.
 Follow the [vcpkg "Getting Started" guide](https://vcpkg.io/en/getting-started)
@@ -106,7 +106,7 @@ others work just as well.
 Install the following packages using `pacman`:
 
 ```sh
-pacman -S mingw-w64-ucrt-x86_64-{toolchain,cmake,SDL1.2,glew}
+pacman -S mingw-w64-ucrt-x86_64-{toolchain,cmake,SDL1.2}
 ```
 
 With the packages installed, you can now setup and build:
@@ -114,9 +114,6 @@ With the packages installed, you can now setup and build:
 ```sh
 # With make for SDL1.2 backend
 make sdl
-
-# With make for Sokol backend
-make sokol
 
 # With cmake
 cmake -S path/to/wipeout-rewrite -B path/to/build-dir
