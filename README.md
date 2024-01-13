@@ -13,7 +13,7 @@ More info in my blog: https://phoboslab.org/log/2023/08/rewriting-wipeout
 This fork of Wipeout rewrite supports SDL 1.2 platform-backends:
 [SDL1](https://github.com/libsdl-org/SDL).
 The SDL1 backend supports game controllers 
-(joysticks, gamepads) and uses OpenGL 1.2, 
+(joysticks, gamepads) and uses OpenGL 1.2. 
 
 For Linux & Unix-likes a simple Makefile is a provided. Additionally, this
 project can be build with [CMake](https://cmake.org) for all platforms.
@@ -23,17 +23,11 @@ Consult the following sections for how to install the prerequisites for your pla
 
 ## Linux & Unix-like
 
-Building on Linux should be as simple as installing CMake, GLEW, and the
+Building on Linux should be as simple as installing CMake, and the
 necessary platform libraries from your package manager.
 For brevity, this guide assumes that the necessary development tools (i.e. a C
 compiler, make) have already been installed.
 The SDL1.2 platform should only require the `SDL1.2` library and headers, whilst the
-Sokol platform requires the library/headers for:
-
-- `X11`
-- `Xi`
-- `Xcursor`
-- `ALSA`
 
 The following snippets list the specific package manager invocations for
 popluar \*nix OSs:
@@ -57,33 +51,11 @@ With the packages installed, you can now setup and build:
 make sdl
 
 # With make for SDL1 with GLX backend (for legacy NVIDIA and perhaps others)
-USE_GLX=true make sdl
-
-# With make for Sokol backend
-make sokol
+RENDERER=LEGACY_GL make sdl
 
 # With cmake
 cmake -S path/to/wipeout-rewrite -B path/to/build-dir
 cmake --build path/to/build-dir
-```
-
-## macOS
-
-Currently only the SDL1.2 platform works.
-macOS is very picky about the GLSL shader version when compiling with Sokol and
-OpenGL3.3; it shouldn't be too difficult to get it working, but will probably
-require a bunch of `#ifdefs` for SDL and WASM.
-Pull-requests welcome!
-
-It is recommended to use [Homebrew](https://brew.sh) to fetch the required
-software, other solutions (e.g. MacPorts) may work but have not been tested.
-Using homebrew, you can install the required software with the following:
-
-```sh
-brew install cmake
-# For SDL1.2
-brew install SDL1.2
-# Nothing extra needed for Sokol
 ```
 
 With the packages installed, you can now setup and build:
