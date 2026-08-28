@@ -14,8 +14,71 @@
 #endif
 
 #ifdef __AMIGA__
+#include <exec/io.h>
+#include <exec/ports.h>
+#include <devices/timer.h>
+#include <proto/exec.h>
+#include <proto/timer.h>
+
 unsigned long __stack = 1024 * 1024;
 static const char *version __attribute__((used)) = "$VER: wipEout 1.0.2 "__DATE__" port by Arczi";
+
+struct Device *TimerBase = NULL;
+static struct MsgPort *amiga_timer_port = NULL;
+static struct timerequest *amiga_timer_request = NULL;
+static uint64_t amiga_eclock_start = 0;
+static uint32_t amiga_eclock_frequency = 0;
+
+static uint64_t amiga_read_eclock(void) {
+	struct EClockVal value;
+	ReadEClock(&value);
+	return ((uint64_t)value.ev_hi << 32) | value.ev_lo;
+}
+
+static bool amiga_timer_init(void) {
+	amiga_timer_port = CreateMsgPort();
+	if (!amiga_timer_port) {
+		return false;
+	}
+
+	amiga_timer_request = (struct timerequest *)CreateIORequest(
+		amiga_timer_port, sizeof(*amiga_timer_request)
+	);
+	if (!amiga_timer_request) {
+		DeleteMsgPort(amiga_timer_port);
+		amiga_timer_port = NULL;
+		return false;
+	}
+
+	if (OpenDevice(TIMERNAME, UNIT_MICROHZ,
+		(struct IORequest *)amiga_timer_request, 0) != 0) {
+		DeleteIORequest((struct IORequest *)amiga_timer_request);
+		DeleteMsgPort(amiga_timer_port);
+		amiga_timer_request = NULL;
+		amiga_timer_port = NULL;
+		return false;
+	}
+
+	TimerBase = amiga_timer_request->tr_node.io_Device;
+	struct EClockVal value;
+	amiga_eclock_frequency = ReadEClock(&value);
+	amiga_eclock_start = ((uint64_t)value.ev_hi << 32) | value.ev_lo;
+	return amiga_eclock_frequency != 0;
+}
+
+static void amiga_timer_cleanup(void) {
+	if (amiga_timer_request) {
+		CloseDevice((struct IORequest *)amiga_timer_request);
+		DeleteIORequest((struct IORequest *)amiga_timer_request);
+	}
+	if (amiga_timer_port) {
+		DeleteMsgPort(amiga_timer_port);
+	}
+	amiga_timer_request = NULL;
+	amiga_timer_port = NULL;
+	TimerBase = NULL;
+	amiga_eclock_frequency = 0;
+}
 #endif
 
 
@@ -261,6 +324,12 @@ void platform_pump_events(void) {
 }
 //double == fast
 double  platform_now() {
+#ifdef __AMIGA__
+	if (amiga_eclock_frequency) {
+		uint64_t elapsed = amiga_read_eclock() - amiga_eclock_start;
+		return (double)elapsed / (double)amiga_eclock_frequency;
+	}
+#endif
 	uint64_t perf_counter = SDL_GetPerformanceCounter();
 	return (double )perf_counter / (double )perf_freq;
 }
@@ -557,6 +626,9 @@ int main
 		fprintf(stdout, "Number of Buttons: %d\n", SDL_JoystickNumButtons(gamepad));
 	}
 	perf_freq = SDL_GetPerformanceFrequency();
+#ifdef __AMIGA__
+	amiga_timer_init();
+#endif
 
 	SDL_AudioSpec audio_device;
 	memset(&audio_device, 0, sizeof(audio_device));
@@ -581,6 +653,9 @@ int main
 	}
 	system_cleanup();
 	platform_video_cleanup();
+#ifdef __AMIGA__
+	amiga_timer_cleanup();
+#endif
 
 	//SDL_DestroyWindow(window);
 
