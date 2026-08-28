@@ -59,8 +59,8 @@ typedef struct {
 #define SFX_MAX_ACTIVE 16
 
 void sfx_load(void);
-void sfx_stero_mix(float *buffer, uint32_t len);
-void sfx_set_external_mix_cb(void (*cb)(float *, uint32_t len));
+void sfx_stero_mix(int16_t *buffer, uint32_t len);
+void sfx_set_external_mix_cb(void (*cb)(int16_t *, uint32_t len));
 void sfx_reset(void);
 void sfx_pause(void);
 void sfx_unpause(void);

@@ -18,7 +18,7 @@ static uint32_t temp_objects_len;
 // These allocations persist for many frames. The allocator level is reset
 // whenever we load a new race track or menu in game_set_scene()
 
-void *mem_mark(void) {
+void *mem_mark() {
 	return &hunk[bump_len];
 }
 
@@ -47,6 +47,7 @@ void mem_reset(void *p) {
 
 void *mem_temp_alloc(uint32_t size) {
 	size = ((size + 7) >> 3) << 3; // allign to 8 bytes
+	//size = ((size >> 3) + 7) << 3; // allign to 8 bytes
 
 	error_if(bump_len + temp_len + size >= MEM_HUNK_BYTES, "Failed to allocate %d bytes in temp mem", size);
 	error_if(temp_objects_len >= MEM_TEMP_OBJECTS_MAX, "MEM_TEMP_OBJECTS_MAX reached");
@@ -76,6 +77,6 @@ void mem_temp_free(void *p) {
 	temp_len = remaining_max;
 }
 
-void mem_temp_check(void) {
+void mem_temp_check() {
 	error_if(temp_len != 0, "Temp memory not free: %d object(s)", temp_objects_len);
 }

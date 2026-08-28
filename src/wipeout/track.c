@@ -275,7 +275,8 @@ void track_draw(camera_t *camera) {
 		float dist_sq = vec3_dot(diff, diff);
 		if (
 			cam_dot < 2048 && // FIXME: should use the bounding radius of the section
-			dist_sq < (RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR)
+			dist_sq < (render_fadeout/*RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR*/)
+			//dist_sq < (RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR)
 		) {
 			track_draw_section(s);
 		}

@@ -13,19 +13,19 @@ static double time_scale = 1.0;
 static double tick_last;
 static double cycle_time = 0;
 
-void system_init(void) {
+void system_init() {
 	time_real = platform_now();
 	input_init();
 	render_init(platform_screen_size());
 	game_init();
 }
 
-void system_cleanup(void) {
+void system_cleanup() {
 	render_cleanup();
 	input_cleanup();
 }
 
-void system_exit(void) {
+void system_exit() {
 	platform_exit();
 }
 
@@ -52,7 +52,7 @@ void system_update(void) {
 	mem_temp_check();
 }
 
-void system_reset_cycle_time(void) {
+void system_reset_cycle_time() {
 	cycle_time = 0;
 }
 

@@ -10,17 +10,17 @@ static particle_t *particles;
 static int particles_active = 0;
 static texture_list_t particle_textures;
 
-void particles_load(void) {
+void particles_load() {
 	particles = mem_bump(sizeof(particle_t) * PARTICLES_MAX);
 	particle_textures = image_get_compressed_textures("wipeout/common/effects.cmp");
 	particles_init();
 }
 
-void particles_init(void) {
+void particles_init() {
 	particles_active = 0;
 }
 
-void particles_update(void) {
+void particles_update() {
 	for (int i = 0; i < particles_active; i++) {
 		particle_t *p = &particles[i];
 
@@ -33,7 +33,7 @@ void particles_update(void) {
 	}
 }
 
-void particles_draw(void) {
+void particles_draw() {
 	if (particles_active == 0) {
 		return;
 	}
@@ -43,10 +43,12 @@ void particles_draw(void) {
 	render_set_blend_mode(RENDER_BLEND_LIGHTER);
 	render_set_depth_offset(-32.0);
 
+	render_push_matrix();
 	for (int i = 0; i < particles_active; i++) {
 		particle_t *p = &particles[i];
 		render_push_sprite(p->position, p->size, p->color, p->texture);
 	}
+	render_pop_matrix();
 
 	render_set_depth_offset(0.0);
 	render_set_depth_write(true);

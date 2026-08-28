@@ -4,12 +4,6 @@
 #include <string.h>
 #include "types.h"
 
-#ifdef WIN32
-	#undef min
-	#undef max
-	#undef near
-	#undef far
-#endif
 
 #if !defined(offsetof)
 	#define offsetof(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))

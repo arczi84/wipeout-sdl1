@@ -28,9 +28,20 @@ static bool menu_is_scroll_text = false;
 static bool has_show_credits = false;
 static float attract_start_time;
 static menu_t *active_menu = NULL;
+static uint16_t menu_dim_texture;
 
 void race_init(void) {
 	ingame_menus_load();
+	/*
+	 * This MiniGL path ignores alpha supplied by the vertex colour.  Put the
+	 * 50% alpha in the texture instead, which the blend unit handles correctly,
+	 * and submit an opaque vertex colour below.
+	 */
+	rgba_t menu_dim_pixels[4] = {
+		rgba(0, 0, 0, 128), rgba(0, 0, 0, 128),
+		rgba(0, 0, 0, 128), rgba(0, 0, 0, 128)
+	};
+	menu_dim_texture = render_texture_create(2, 2, menu_dim_pixels);
 	menu_is_scroll_text = false;
 
 	const circut_settings_t *cs = &def.circuts[g.circut].settings[g.race_class];
@@ -125,7 +136,7 @@ void race_update(void) {
 	if (active_menu) {
 		if (!menu_is_scroll_text) {
 			vec2i_t size = render_size();
-			render_push_2d(vec2i(0, 0), size, rgba(0, 0, 0, 128), RENDER_NO_TEXTURE);
+			render_draw_2d_texture_alpha(vec2i(0, 0), size, menu_dim_texture);
 		}
 		menu_update(active_menu);
 	}

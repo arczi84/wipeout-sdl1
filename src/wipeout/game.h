@@ -263,9 +263,9 @@ extern const game_def_t def;
 extern game_t g;
 extern save_t save;
 
-void game_init(void);
+void game_init();
 void game_set_scene(game_scene_t scene);
-void game_reset_championship(void);
-void game_update(void);
+void game_reset_championship();
+void game_update();
 
 #endif

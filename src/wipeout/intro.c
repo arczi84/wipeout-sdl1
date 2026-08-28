@@ -19,23 +19,23 @@ void *realloc_dummmy(void *p, size_t sz) {
 #define PLM_MALLOC mem_bump
 #define PLM_FREE free_dummmy
 #define PLM_REALLOC realloc_dummmy
-#include <pl_mpeg.h>
+#include "../libs/pl_mpeg.h"
 
 #define INTRO_AUDIO_BUFFER_LEN (64 * 1024)
 
 static plm_t *plm;
 static rgba_t *frame_buffer;
 static int16_t texture;
-static float *audio_buffer;
+static int16_t *audio_buffer;
 static int audio_buffer_read_pos;
 static int audio_buffer_write_pos;
 
 static void video_cb(plm_t *plm, plm_frame_t *frame, void *user);
 static void audio_cb(plm_t *plm, plm_samples_t *samples, void *user);
-static void audio_mix(float *samples, uint32_t len);
+static void audio_mix(int16_t *samples, uint32_t len);
 static void intro_end(void);
 
-void intro_init(void) {
+void intro_init() {
 	plm = plm_create_with_filename("wipeout/intro.mpeg");
 	if (!plm) {
 		intro_end();
@@ -50,6 +50,8 @@ void intro_init(void) {
 
 	int w = plm_get_width(plm);
 	int h = plm_get_height(plm);
+	w = 640;
+	h = 360;
 	frame_buffer = mem_bump(w * h * sizeof(rgba_t));
 	for (int i = 0; i < w * h; i++) {
 		frame_buffer[i] = rgba(0, 0, 0, 255);
@@ -57,17 +59,17 @@ void intro_init(void) {
 	texture = render_texture_create(w, h, frame_buffer);
 
 	sfx_set_external_mix_cb(audio_mix);
-	audio_buffer = mem_bump(INTRO_AUDIO_BUFFER_LEN * sizeof(float) * 2);
+	audio_buffer = mem_bump(INTRO_AUDIO_BUFFER_LEN * sizeof(int16_t) * 2);
 	audio_buffer_read_pos = 0;
 	audio_buffer_write_pos = 0;
 }
 
-static void intro_end(void) {
+static void intro_end() {
 	sfx_set_external_mix_cb(NULL);
 	game_set_scene(GAME_SCENE_TITLE);
 }
 
-void intro_update(void) {
+void intro_update() {
 	if (!plm) {
 		return;
 	}
@@ -87,7 +89,7 @@ static void audio_cb(plm_t *plm, plm_samples_t *samples, void *user) {
 	}
 }
 
-static void audio_mix(float *samples, uint32_t len) {
+static void audio_mix(int16_t *samples, uint32_t len) {
 	int i;
 	for (i = 0; i < len && audio_buffer_read_pos < audio_buffer_write_pos; i++) {
 		samples[i] = audio_buffer[audio_buffer_read_pos % INTRO_AUDIO_BUFFER_LEN];

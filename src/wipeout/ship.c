@@ -407,7 +407,20 @@ void ship_reset_exhaust_plume(ship_t* self)
 
 
 void ship_draw(ship_t *self) {
+	/*
+	 * The original ship PRMs contain a few visible hull polygons whose winding
+	 * is inconsistent with the rest of the mesh.  MiniGL culls those polygons,
+	 * which looks like individual textures are missing.  Ships are closed,
+	 * depth-tested meshes, so drawing both sides is safe and keeps those hull
+	 * sections visible.  Keep this local to ships; track culling is unchanged.
+	 * The hull itself is opaque, while blending is restored immediately for
+	 * shadows, shields and other translucent effects.
+	 */
+	render_set_cull_backface(false);
+	render_set_blend_enabled(false);
 	object_draw(self->model, &self->mat);
+	render_set_blend_enabled(true);
+	render_set_cull_backface(true);
 }
 
 void ship_draw_shadow(ship_t *self) {	

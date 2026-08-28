@@ -21,7 +21,7 @@ Object *objects_load(char *name, texture_list_t tl) {
 	if (!bytes) {
 		die("Failed to load file %s\n", name);
 	}
-	printf("load: %s\n", name);
+	//printf("load: %s\n", name);
 
 	Object *objectList = mem_mark();
 	Object *prevObject = NULL;
@@ -76,14 +76,14 @@ Object *objects_load(char *name, texture_list_t tl) {
 			object->vertices[i].z = get_i16(bytes, &p);
 			p += 2; // padding
 
-			if (fabsf(object->vertices[i].x) > object->radius) {
-				object->radius = fabsf(object->vertices[i].x);
+			if (abs(object->vertices[i].x) > object->radius) {
+				object->radius = abs(object->vertices[i].x);
 			}
-			if (fabsf(object->vertices[i].y) > object->radius) {
-				object->radius = fabsf(object->vertices[i].y);
+			if (abs(object->vertices[i].y) > object->radius) {
+				object->radius = abs(object->vertices[i].y);
 			}
-			if (fabsf(object->vertices[i].z) > object->radius) {
-				object->radius = fabsf(object->vertices[i].z);
+			if (abs(object->vertices[i].z) > object->radius) {
+				object->radius = abs(object->vertices[i].z);
 			}
 		}
 
@@ -461,6 +461,7 @@ void object_draw(Object *object, mat4_t *mat) {
 	int primitives_len = object->primitives_len;
 
 	render_set_model_mat(mat);
+	render_push_matrix();
 
 	// TODO: check for PRM_SINGLE_SIDED
 
@@ -779,4 +780,5 @@ void object_draw(Object *object, mat4_t *mat) {
 
 		}
 	}
+	render_pop_matrix();
 }

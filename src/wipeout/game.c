@@ -396,7 +396,7 @@ save_t save = {
 
 	.sfx_volume = 0.6,
 	.music_volume = 0.5,
-	.internal_roll = 0.6,
+	.internal_roll = 0.6,//rewrite
 	.ui_scale = 0,
 	.show_fps = false,
 	.fullscreen = false,
@@ -488,8 +488,8 @@ game_t g = {0};
 
 
 struct {
-	void (*init)(void);
-	void (*update)(void);
+	void (*init)();
+	void (*update)();
 } game_scenes[] = {
 	[GAME_SCENE_INTRO] = {intro_init, intro_update},
 	[GAME_SCENE_TITLE] = {title_init, title_update},
@@ -502,7 +502,8 @@ static game_scene_t scene_next = GAME_SCENE_NONE;
 static int global_textures_len = 0;
 static void *global_mem_mark = 0;
 
-void game_init(void) {
+void game_init() {
+
 	uint32_t size;
 	save_t *save_file = (save_t *)platform_load_userdata("save.dat", &size);
 	if (save_file) {
@@ -521,7 +522,7 @@ void game_init(void) {
 	render_set_post_effect(save.post_effect);
 
 	srand((int)(platform_now() * 100));
-	
+
 	ui_load();
 	sfx_load();
 	hud_load();
@@ -568,7 +569,7 @@ void game_init(void) {
 
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_A, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_START, A_MENU_START);
-	
+
 
 	// User defined, loaded from the save struct
 	for (int action = 0; action < len(save.buttons); action++) {
@@ -580,8 +581,11 @@ void game_init(void) {
 		}
 	}
 
-
+#if defined(NO_INTRO)
+	game_set_scene(GAME_SCENE_TITLE);
+#else
 	game_set_scene(GAME_SCENE_INTRO);
+#endif
 }
 
 void game_set_scene(game_scene_t scene) {
@@ -589,7 +593,7 @@ void game_set_scene(game_scene_t scene) {
 	scene_next = scene;
 }
 
-void game_reset_championship(void) {
+void game_reset_championship() {
 	for (int i = 0; i < len(g.championship_ranks); i++) {
 		g.championship_ranks[i].points = 0;
 		g.championship_ranks[i].pilot = i;
@@ -597,8 +601,8 @@ void game_reset_championship(void) {
 	g.lives = NUM_LIVES;
 }
 
-void game_update(void) {
-	double frame_start_time = platform_now();
+void game_update() {
+	scalar_t frame_start_time = platform_now();
 
 	int sh = render_size().y;
 	int scale = max(1, sh >=  720 ? sh / 360 : sh / 240);
@@ -628,7 +632,7 @@ void game_update(void) {
 	bool fullscreen = platform_get_fullscreen();
 	if (fullscreen != save.fullscreen) {
 		save.fullscreen = fullscreen;
-		save.is_dirty = true;
+		//save.is_dirty = true;
 	}
 
 	if (save.is_dirty) {
@@ -636,13 +640,13 @@ void game_update(void) {
 		// FIXME: this should probably run async somewhere
 		save.is_dirty = false;
 		platform_store_userdata("save.dat", &save, sizeof(save_t));
-		printf("wrote save.dat\n");
+		//printf("wrote save.dat\n");
 	}
 
-	double now = platform_now();
+	scalar_t now = platform_now();
 	g.frame_time = now - frame_start_time;
 	if (g.frame_time > 0) {
-		g.frame_rate = ((double)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
+		g.frame_rate = ((scalar_t)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
 	}
 }
 

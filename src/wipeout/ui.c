@@ -15,7 +15,7 @@ typedef struct {
 	glyph_t glyphs[40];
 } char_set_t;
 
-int ui_scale = 2;
+int ui_scale = 1;
 
 char_set_t char_set[UI_SIZE_MAX] = {
 	[UI_SIZE_16] = {

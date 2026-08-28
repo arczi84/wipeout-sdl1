@@ -137,7 +137,8 @@ void scene_draw(camera_t *camera) {
 		float dist_sq = vec3_dot(diff, diff);
 		if (
 			cam_dot < object->radius && 
-			dist_sq < (RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR)
+			dist_sq < (render_fadeout/*RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR*/)
+			//dist_sq < (RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR)
 		) {
 			object_draw(object, &object->mat);
 		}

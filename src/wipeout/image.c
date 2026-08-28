@@ -17,7 +17,7 @@
 
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
+#include "../libs/stb_image_write.h"
 
 
 #define TIM_TYPE_PALETTED_4_BPP 0x08
@@ -226,7 +226,7 @@ void lzss_decompress(uint8_t *in_data, uint8_t *out_data) {
 }
 
 cmp_t *image_load_compressed(char *name) {
-	printf("load cmp %s\n", name);
+	//printf("load cmp %s\n", name);
 	uint32_t compressed_size;
 	uint8_t *compressed_bytes = platform_load_asset(name, &compressed_size);
 
@@ -260,7 +260,7 @@ cmp_t *image_load_compressed(char *name) {
 }
 
 uint16_t image_get_texture(char *name) {
-	printf("load: %s\n", name);
+	//printf("load: %s\n", name);
 	uint32_t size;
 	uint8_t *bytes = platform_load_asset(name, &size);
 	image_t *image = image_load_from_bytes(bytes, false);
@@ -272,7 +272,7 @@ uint16_t image_get_texture(char *name) {
 }
 
 uint16_t image_get_texture_semi_trans(char *name) {
-	printf("load: %s\n", name);
+	//printf("load: %s\n", name);
 	uint32_t size;
 	uint8_t *bytes = platform_load_asset(name, &size);
 	image_t *image = image_load_from_bytes(bytes, true);

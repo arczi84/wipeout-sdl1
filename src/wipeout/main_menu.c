@@ -35,11 +35,37 @@ static struct {
 	Object *rescue;
 	Object *controller;
 } models;
+//#undef M_PI
+//#define M_PI 3.14
+//#15927
+//#define M_PI 3.14159265
 
 static void draw_model(Object *model, vec2_t offset, vec3_t pos, float rotation) {
 	render_set_view(vec3(0,0,0), vec3(0, -M_PI, -M_PI));
-	render_set_screen_position(offset);
+	render_set_screen_position(offset);//
+	//#define mat4_identity() mat4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 )
 	mat4_t mat = mat4_identity();
+	mat4_set_translation(&mat, pos);
+	mat4_set_yaw_pitch_roll(&mat, vec3(0, rotation, M_PI));
+	/*
+	 * PRM models used by the menus are opaque.  Keeping GL blending enabled
+	 * here makes their antialiased/indexed texture alpha dim the whole model
+	 * on MiniGL.  Limit the state change to this menu helper so translucent
+	 * gameplay effects (notably the shield) keep their intended alpha.
+	 */
+	render_set_cull_backface(false);
+	render_set_blend_enabled(false);
+	object_draw(model, &mat);
+	render_set_blend_enabled(true);
+	render_set_cull_backface(true);
+	render_set_screen_position(vec2(0, 0));
+}
+
+static void draw_model1(Object *model, vec2_t offset, vec3_t pos, float rotation) {
+	render_set_view(vec3(0,0,0), vec3(0, -M_PI, -M_PI));
+	render_set_screen_position(vec2(0, 0));//offset);//
+	//#define mat4_identity() mat4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 )
+	mat4_t mat = mat4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 );//mat4_identity();
 	mat4_set_translation(&mat, pos);
 	mat4_set_yaw_pitch_roll(&mat, vec3(0, rotation, M_PI));
 	object_draw(model, &mat);
@@ -189,7 +215,7 @@ static void page_options_control_set_draw(menu_t *menu, int data) {
 
 static void page_options_controls_set_init(menu_t *menu, int data) {
 	control_current_action = data;
-	await_input_deadline = platform_now() + 3;
+	await_input_deadline = platform_now() + 300;
 
 	menu_page_t *page = menu_push(menu, "AWAITING INPUT", page_options_control_set_draw);
 	input_capture(button_capture, menu);
@@ -656,4 +682,3 @@ void main_menu_update(void) {
 
 	menu_update(main_menu);
 }
-

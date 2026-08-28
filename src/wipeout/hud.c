@@ -31,26 +31,30 @@ const struct {
 } speedo = {
 	.width = 121,
 	.skew = 2,
+#ifdef  AMIGA//GCC_VERSION >= 4
 	.bars = {
-		{{.x =   6, .y = 12}, .height = 10, .color = rgba( 66,  16,  49, 255)},
-		{{.x =  13, .y = 12}, .height = 10, .color = rgba(115,  33,  90, 255)},
-		{{.x =  20, .y = 12}, .height = 10, .color = rgba(132,  58, 164, 255)},
-		{{.x =  27, .y = 12}, .height = 10, .color = rgba( 99,  90, 197, 255)},
-		{{.x =  34, .y = 12}, .height = 10, .color = rgba( 74, 148, 181, 255)},
-		{{.x =  41, .y = 12}, .height = 10, .color = rgba( 66, 173, 115, 255)},
-		{{.x =  50, .y = 10}, .height = 12, .color = rgba( 99, 206,  58, 255)},
-		{{.x =  59, .y =  8}, .height = 12, .color = rgba(189, 206,  41, 255)},
-		{{.x =  69, .y =  5}, .height = 13, .color = rgba(247, 140,  33, 255)},
-		{{.x =  81, .y =  2}, .height = 15, .color = rgba(255, 197,  49, 255)},
-		{{.x =  95, .y =  1}, .height = 16, .color = rgba(255, 222, 115, 255)},
-		{{.x = 110, .y =  1}, .height = 16, .color = rgba(255, 239, 181, 255)},
-		{{.x = 126, .y =  1}, .height = 16, .color = rgba(255, 255, 255, 255)}
+		{{.x =   6, .y = 12}, .height = 10, .color = {.r = 66,  .g = 16,  .b = 49,  .a = 255}},
+		{{.x =  13, .y = 12}, .height = 10, .color = {.r = 115, .g =  33, .b =  90, .a = 255}},
+		{{.x =  20, .y = 12}, .height = 10, .color = {.r = 132, .g =  58, .b = 164, .a = 255}},
+		{{.x =  27, .y = 12}, .height = 10, .color = {.r =  99, .g =  90, .b = 197, .a = 255}},
+		{{.x =  34, .y = 12}, .height = 10, .color = {.r =  74, .g = 148, .b = 181, .a = 255}},
+		{{.x =  41, .y = 12}, .height = 10, .color = {.r =  66, .g = 173, .b = 115, .a = 255}},
+		{{.x =  50, .y = 10}, .height = 12, .color = {.r =  99, .g = 206, .b =  58, .a = 255}},
+		{{.x =  59, .y =  8}, .height = 12, .color = {.r = 189, .g = 206, .b =  41, .a = 255}},
+		{{.x =  69, .y =  5}, .height = 13, .color = {.r = 247, .g = 140, .b =  33, .a = 255}},
+		{{.x =  81, .y =  2}, .height = 15, .color = {.r = 255, .g = 197, .b =  49, .a = 255}},
+		{{.x =  95, .y =  1}, .height = 16, .color = {.r = 255, .g = 222, .b = 115, .a = 255}},
+		{{.x = 110, .y =  1}, .height = 16, .color = {.r = 255, .g = 239, .b = 181, .a = 255}},
+		{{.x = 126, .y =  1}, .height = 16, .color = {.r = 255, .g = 255, .b = 255, .a = 255}}
 	}
+#else
+	.bars = {13}
+#endif
 };
 
 static uint16_t speedo_facia_texture;
 
-void hud_load(void) {
+void hud_load() {
 	speedo_facia_texture = image_get_texture("wipeout/textures/speedo.tim");
 	target_reticle = image_get_texture_semi_trans("wipeout/textures/target2.tim");
 	weapon_icon_textures = image_get_compressed_textures("wipeout/common/wicons.cmp");
@@ -190,7 +194,7 @@ void hud_draw(ship_t *ship) {
 	// Current lap time
 	if (ship->lap >= 0) {
 		ui_draw_time(ship->lap_time, ui_scaled_pos(UI_POS_BOTTOM | UI_POS_LEFT, vec2i(16, -30)), UI_SIZE_16, UI_COLOR_DEFAULT);
-	
+
 		for (int i = 0; i < ship->lap && i < NUM_LAPS-1; i++) {
 			ui_draw_time(g.lap_times[ship->pilot][i], ui_scaled_pos(UI_POS_BOTTOM | UI_POS_LEFT, vec2i(16, -45 - (10 * i))), UI_SIZE_8, UI_COLOR_ACCENT);
 		}
@@ -198,8 +202,8 @@ void hud_draw(ship_t *ship) {
 
 	// Current Lap
 	int display_lap = max(0, ship->lap + 1);
-	ui_draw_text("LAP", ui_scaled(vec2i(15, 8)), UI_SIZE_8, UI_COLOR_ACCENT); 
-	ui_draw_number(display_lap, ui_scaled(vec2i(10, 19)), UI_SIZE_16, UI_COLOR_DEFAULT); 
+	ui_draw_text("LAP", ui_scaled(vec2i(15, 8)), UI_SIZE_8, UI_COLOR_ACCENT);
+	ui_draw_number(display_lap, ui_scaled(vec2i(10, 19)), UI_SIZE_16, UI_COLOR_DEFAULT);
 	int width = ui_char_width('0' + display_lap, UI_SIZE_16);
 	ui_draw_text("OF", ui_scaled(vec2i((10 + width), 27)), UI_SIZE_8, UI_COLOR_ACCENT);
 	ui_draw_number(NUM_LAPS, ui_scaled(vec2i((32 + width), 19)), UI_SIZE_16, UI_COLOR_DEFAULT);
@@ -212,8 +216,8 @@ void hud_draw(ship_t *ship) {
 
 	// Framerate
 	if (save.show_fps) {
-		ui_draw_text("FPS", ui_scaled(vec2i(16, 78)), UI_SIZE_8, UI_COLOR_ACCENT);
-		ui_draw_number((int)(g.frame_rate), ui_scaled(vec2i(16, 90)), UI_SIZE_8, UI_COLOR_DEFAULT);
+		ui_draw_text("FPS", ui_scaled(vec2i(16, 78)), UI_SIZE_16, UI_COLOR_ACCENT);
+		ui_draw_number((int)(g.frame_rate), ui_scaled(vec2i(16, 90)), UI_SIZE_16, UI_COLOR_DEFAULT);
 	}
 
 	// Lap Record

@@ -4,13 +4,17 @@
 #include "types.h"
 
 #define SYSTEM_WINDOW_NAME "wipEout"
-#define SYSTEM_WINDOW_WIDTH 1280
-#define SYSTEM_WINDOW_HEIGHT 720
+#define SYSTEM_WINDOW_WIDTH 1280//1920
+#define SYSTEM_WINDOW_HEIGHT 720//360//1080
 
-void system_init(void);
-void system_update(void);
-void system_cleanup(void);
-void system_exit(void);
+ushort window_width;
+ushort window_height;
+float render_fadeout;
+
+void system_init();
+void system_update();
+void system_cleanup();
+void system_exit();
 void system_resize(vec2i_t size);
 
 double system_time(void);

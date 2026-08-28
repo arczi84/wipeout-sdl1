@@ -21,10 +21,17 @@ static int32_t screen_pitch;
 static int32_t screen_ppr;
 static vec2i_t screen_size;
 
+#ifdef __AMIGA__
+static mat4_t view_mat;
+static mat4_t mvp_mat;
+static mat4_t projection_mat;
+static mat4_t sprite_mat;
+#else
 static mat4_t view_mat = mat4_identity();
 static mat4_t mvp_mat = mat4_identity();
 static mat4_t projection_mat = mat4_identity();
 static mat4_t sprite_mat = mat4_identity();
+#endif
 
 static render_texture_t textures[TEXTURES_MAX];
 static uint32_t textures_len;
@@ -43,7 +50,7 @@ void render_init(vec2i_t screen_size) {
 	RENDER_NO_TEXTURE = render_texture_create(2, 2, white_pixels);
 }
 
-void render_cleanup(void) {}
+void render_cleanup() {}
 
 void render_set_screen_size(vec2i_t size) {
 	screen_size = size;
@@ -63,12 +70,15 @@ void render_set_screen_size(vec2i_t size) {
 void render_set_resolution(render_resolution_t res) {}
 void render_set_post_effect(render_post_effect_t post) {}
 
-vec2i_t render_size(void) {
+void render_push_matrix() { }
+void render_pop_matrix() { }
+
+vec2i_t render_size() {
 	return screen_size;
 }
 
 
-void render_frame_prepare(void) {
+void render_frame_prepare() {
 	screen_buffer = platform_get_screenbuffer(&screen_pitch);
 	screen_ppr = screen_pitch / sizeof(rgba_t);
 
@@ -80,7 +90,7 @@ void render_frame_prepare(void) {
 	}
 }
 
-void render_frame_end(void) {}
+void render_frame_end() {}
 
 void render_set_view(vec3_t pos, vec3_t angles) {
 	view_mat = mat4_identity();
@@ -92,7 +102,7 @@ void render_set_view(vec3_t pos, vec3_t angles) {
 	render_set_model_mat(&mat4_identity());
 }
 
-void render_set_view_2d(void) {
+void render_set_view_2d() {
 	float near = -1;
 	float far = 1;
 	float left = 0;
@@ -120,6 +130,7 @@ void render_set_depth_write(bool enabled) {}
 void render_set_depth_test(bool enabled) {}
 void render_set_depth_offset(float offset) {}
 void render_set_screen_position(vec2_t pos) {}
+void render_set_blend_enabled(bool enabled) {}
 void render_set_blend_mode(render_blend_mode_t mode) {}
 void render_set_cull_backface(bool enabled) {}
 
@@ -182,6 +193,10 @@ void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color, uint16_t texture_in
 	render_push_2d_tile(pos, vec2i(0, 0), render_texture_size(texture_index), size, color, texture_index);
 }
 
+void render_draw_2d_texture_alpha(vec2i_t pos, vec2i_t size, uint16_t texture_index) {
+	render_push_2d(pos, size, rgba(128, 128, 128, 255), texture_index);
+}
+
 void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_t size, rgba_t color, uint16_t texture_index) {
 	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 	render_push_tris((tris_t){
@@ -227,7 +242,7 @@ void render_texture_replace_pixels(int16_t texture_index, rgba_t *pixels) {
 	// memcpy(t->pixels, pixels, t->size.x * t->size.y * sizeof(rgba_t));
 }
 
-uint16_t render_textures_len(void) {
+uint16_t render_textures_len() {
 	return textures_len;
 }
 
