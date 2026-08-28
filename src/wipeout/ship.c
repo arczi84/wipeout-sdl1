@@ -149,6 +149,26 @@ void ships_reset_exhaust_plumes(void) {
 	}
 }
 
+static bool ship_is_near_player(const ship_t *ship) {
+	const ship_t *player = &g.ships[g.pilot];
+	int distance;
+
+	if (ship == player || !ship->section || !player->section) {
+		return true;
+	}
+
+	distance = abs(ship->section->num - player->section->num);
+	/* The track is a loop, so sections near its two ends are neighbours. */
+	if (g.track.section_count > 0) {
+		int wrapped_distance = g.track.section_count - distance;
+		if (wrapped_distance < distance) {
+			distance = wrapped_distance;
+		}
+	}
+
+	return distance < 10;
+}
+
 
 void ships_draw(void) {
 	// Ship models
@@ -157,6 +177,9 @@ void ships_draw(void) {
 			(flags_is(g.ships[i].flags, SHIP_VIEW_INTERNAL) && flags_not(g.ships[i].flags, SHIP_IN_RESCUE)) ||
 			(g.race_type == RACE_TYPE_TIME_TRIAL && i != g.pilot)
 		) {
+			continue;
+		}
+		if (!ship_is_near_player(&g.ships[i])) {
 			continue;
 		}
 
@@ -176,6 +199,9 @@ void ships_draw(void) {
 			flags_not(g.ships[i].flags, SHIP_VISIBLE) || 
 			flags_is(g.ships[i].flags, SHIP_FLYING)
 		) {
+			continue;
+		}
+		if (!ship_is_near_player(&g.ships[i])) {
 			continue;
 		}
 
