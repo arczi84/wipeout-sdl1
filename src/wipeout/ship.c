@@ -460,6 +460,13 @@ void ship_draw_shadow(ship_t *self) {
 	nose = vec3_sub(nose, vec3_mulf(face->normal, vec3_distance_to_plane(nose, face_point, face->normal)));
 	wngl = vec3_sub(wngl, vec3_mulf(face->normal, vec3_distance_to_plane(wngl, face_point, face->normal)));
 	wngr = vec3_sub(wngr, vec3_mulf(face->normal, vec3_distance_to_plane(wngr, face_point, face->normal)));
+
+	/* Keep the coplanar shadow above the track even when polygon offset is
+	 * unavailable in the active MiniGL backend. */
+	vec3_t shadow_offset = vec3_mulf(face->normal, 16.0);
+	nose = vec3_add(nose, shadow_offset);
+	wngl = vec3_add(wngl, shadow_offset);
+	wngr = vec3_add(wngr, shadow_offset);
 	
 	rgba_t color = rgba(0 , 0 , 0, 128);
 	render_push_tris((tris_t) {

@@ -56,7 +56,7 @@
 #undef RENDER_USE_MIPMAPS
 #define RENDER_USE_MIPMAPS 0
 
-#define NEAR_PLANE 16.0
+#define NEAR_PLANE 256.0
 #define FAR_PLANE 262144.0
 
 #if defined(__MORPHOS__)
