@@ -12,6 +12,7 @@ DEBUG ?= false
 AMIGA_SHARED_MINIGL ?= false
 MGL_V12_SDK ?= /mnt/d/dev/Pistorm3D/Pistorm3D_v12
 SDL_MGL_V12 ?= /mnt/d/dev/Pistorm3D/tests/sdl-stormmesa-window/libSDL-mgl-v12.a
+MGL_TEXTURE_MAX_SIZE ?= 0
 USER_CFLAGS ?= -D__MORPHOS__ -DNO_INTRO -w
 SDL_VER	=
 
@@ -64,7 +65,8 @@ else ifeq ($(UNAME_S), AmigaOS)
 	C_FLAGS += -m68060 -mhard-float -fbbb=+ -ffast-math \
 		-fomit-frame-pointer -fno-strict-aliasing -noixemul \
 		-DNO_INLINE_VARARGS -DNO_INLINE_STDARG -DGL_GLEXT_LEGACY \
-		-DAMIGA_SHARED_MINIGL -I$(MGL_V12_SDK)/include \
+		-DAMIGA_SHARED_MINIGL -DMGL_TEXTURE_MAX_SIZE=$(MGL_TEXTURE_MAX_SIZE) \
+		-I$(MGL_V12_SDK)/include \
 		-I/mnt/d/dev/Pistorm3D/libSDL12-mgl/include \
 		-I/mnt/d/amiga-gcc2/include -Isrc -Isrc/wipeout/ -Isrc/libs
 	L_FLAGS_SDL = -m68060 -mhard-float -fbbb=+ -noixemul \

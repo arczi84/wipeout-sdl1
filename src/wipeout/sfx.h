@@ -78,6 +78,7 @@ typedef enum {
 } sfx_music_mode_t;
 
 void sfx_music_next(void);
+void sfx_music_random(void);
 void sfx_music_play(uint32_t index);
 void sfx_music_mode(sfx_music_mode_t);
 void sfx_music_pause(void);

@@ -145,7 +145,7 @@ static void page_options_draw(menu_t *menu, int data) {
 	switch (data) {
 		case 0: draw_model(models.controller, vec2(0, -0.1), vec3(0, 0, -6000), system_cycle_time()); break;
 		case 1: draw_model(models.rescue, vec2(0, -0.2), vec3(0, 0, -700), system_cycle_time()); break; // TODO: needs better model
-		case 2: draw_model(models.options.headphones, vec2(0, -0.2), vec3(0, 0, -300), system_cycle_time()); break;
+		case 2: draw_model(models.options.headphones, vec2(0, -0.2), vec3(0, 0, -400), system_cycle_time()); break;
 		case 3: draw_model(models.options.stopwatch, vec2(0, -0.2), vec3(0, 0, -400), system_cycle_time()); break;
 	}
 }
@@ -303,6 +303,14 @@ static void toggle_show_fps(menu_t *menu, int data) {
 	save.is_dirty = true;
 }
 
+static void toggle_vsync(menu_t *menu, int data) {
+    save.vsync = data != 0;
+    save.is_dirty = true;
+#ifdef __AMIGA__
+    platform_set_vsync(save.vsync != 0);
+#endif
+}
+
 static void toggle_ui_scale(menu_t *menu, int data) {
 	save.ui_scale = data;
 	save.is_dirty = true;
@@ -341,6 +349,9 @@ static void page_options_video_init(menu_t *menu) {
 	menu_page_add_toggle(page, save.internal_roll * 10, "INTERNAL VIEW ROLL", opts_roll, len(opts_roll), toggle_internal_roll);
 	menu_page_add_toggle(page, save.ui_scale, "UI SCALE", opts_ui_sizes, len(opts_ui_sizes), toggle_ui_scale);
 	menu_page_add_toggle(page, save.show_fps, "SHOW FPS", opts_off_on, len(opts_off_on), toggle_show_fps);
+#ifdef __AMIGA__
+    menu_page_add_toggle(page, save.vsync != 0, "VSYNC", opts_off_on, len(opts_off_on), toggle_vsync);
+#endif
 	menu_page_add_toggle(page, save.screen_res, "SCREEN RESOLUTION", opts_res, len(opts_res), toggle_res);
 	menu_page_add_toggle(page, save.post_effect, "POST PROCESSING", opts_post, len(opts_post), toggle_post);
 }

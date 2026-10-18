@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <SDL/SDL.h>
 #include <sdl1_wrapper.h>
 
@@ -18,6 +19,7 @@
 #include <exec/ports.h>
 #include <devices/timer.h>
 #include <proto/exec.h>
+#include <proto/graphics.h>
 #include <proto/timer.h>
 
 unsigned long __stack = 1024 * 1024;
@@ -84,6 +86,7 @@ static void amiga_timer_cleanup(void) {
 
 int width, height;
 bool fullscreen = false;
+static int window_depth = 32;
 
 static uint64_t perf_freq = 0;
 static bool wants_to_exit = false;
@@ -334,6 +337,11 @@ double  platform_now() {
 	return (double )perf_counter / (double )perf_freq;
 }
 
+static bool vsync_enabled;
+void platform_set_vsync(bool enabled) {
+    vsync_enabled = enabled;
+}
+
 bool platform_get_fullscreen(void) {
 	return fullscreen;
 	//return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
@@ -351,7 +359,7 @@ void platform_set_fullscreen(bool fullscreen) {
 	}
 	else {
 		//SDL_SetWindowFullscreen(window, 0);
-		SDL_ShowCursor(SDL_ENABLE);
+		SDL_ShowCursor(SDL_DISABLE);
 	}
 }
 
@@ -404,10 +412,15 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 		//SDL_GL_SetSwapInterval(1);
 
 		static SDL_Surface *renderer;
-		const int flags = SDL_OPENGL| (fullscreen ? SDL_FULLSCREEN : 0);
+		const int flags = SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : 0);
+		const int video_depth = window_depth;
 		SDL_WM_SetCaption("WipEout", "WipEout");
 
-		renderer = SDL_SetVideoMode(window_width, window_height, 16, flags);
+		renderer = SDL_SetVideoMode(window_width, window_height, video_depth, flags);
+		error_if(!renderer, "SDL_SetVideoMode %dx%dx%d %s failed: %s",
+			window_width, window_height, video_depth,
+			fullscreen ? "fullscreen" : "window", SDL_GetError());
+		SDL_ShowCursor(SDL_DISABLE);
 
 	}
 
@@ -423,7 +436,8 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 		//SDL_GL_SwapWindow(window);
 		SDL_GL_SwapBuffers();
 #ifdef AMIGA
-		WaitTOF();
+        if (vsync_enabled)
+		    WaitTOF();
 		//SDL_Delay(16);
 #endif
 	}
@@ -534,9 +548,28 @@ int WinMain
 int main
 #endif
 (int argc, char *argv[]) {
+    /* Strip -log before parsing the existing positional video arguments.
+     * Redirect the streams before SDL/MiniGL initialization so library
+     * diagnostics follow the same setting as game diagnostics. */
+    bool console_log = false;
+    int arg_count = 1;
+    for (int arg = 1; arg < argc; ++arg) {
+        if (strcmp(argv[arg], "-log") == 0)
+            console_log = true;
+        else
+            argv[arg_count++] = argv[arg];
+    }
+    argc = arg_count;
+    argv[argc] = NULL;
+#ifdef __AMIGA__
+    if (!console_log) {
+        freopen("NIL:", "w", stdout);
+        freopen("NIL:", "w", stderr);
+    }
+#endif
 #ifdef AMIGA_SHARED_MINIGL
 	if (!MiniGLOpen()) {
-		fprintf(stderr, "Unable to open minigl.library v12\n");
+		fprintf(stderr, "Unable to open compatible minigl.library\n");
 			return 1;
 	}
 #endif
@@ -544,28 +577,41 @@ int main
 
 	window_width = 640;
 	window_height = 360;
+	window_depth = 32;
 	render_fadeout = 64000.0*64000.0;
   /*  printf("argc = %d\n", argc);
 	for (int i=1; i< argc; i++) {
    printf("\narg%d=%s", i, argv[i]);
  }*/
-    // Sprawdzenie liczby argumentów
-    if (argc >= 4) {
+	// Command line: mode, width, height, render distance and optional depth.
+	if (argc >= 4) {
         // Ustawienie fullscreen
         if (strcmp(argv[1], "-fullscreen") == 0) {
             fullscreen = true;
         }
 		//fullscreen = true;
-        window_width = atoi(argv[2]);
-        window_height = atoi(argv[3]);
-		render_fadeout = atof(argv[4])*atof(argv[4]);
+		window_width = atoi(argv[2]);
+		window_height = atoi(argv[3]);
+		if (argc >= 5) {
+			render_fadeout = atof(argv[4])*atof(argv[4]);
+		}
+		if (argc >= 6) {
+			window_depth = atoi(argv[5]);
+		}
+		if (window_depth != 32) {
+			/* The PiStorm3D backend currently supports only 32-bit displays. */
+			window_depth = 32;
+		}
 
 		printf("Fullscreen: %s\n", (fullscreen ? "Yes" : "No"));
 		printf("Width: %d\n", window_width);
 		printf("Height: %d\n", window_height);
-		printf("Fadeout: %d\n", atoi(argv[4]));
+		printf("Depth: %d\n", window_depth);
+		if (argc >= 5) {
+			printf("Fadeout: %d\n", atoi(argv[4]));
+		}
     } else {
-        printf("Usage: %s [-fullscreen] [width] [height] [render_distance]\n", argv[0]);
+        printf("Usage: %s [-log] [-fullscreen] [width] [height] [render_distance]\n", argv[0]);
     }
 
 	// Figure out the absolute asset and userdata paths. These may either be

@@ -88,6 +88,13 @@ void race_update(void) {
 		}
 	}
 	else {
+		if (input_pressed(A_MUSIC_NEXT)) {
+			sfx_music_next();
+		}
+		else if (input_pressed(A_MUSIC_RANDOM)) {
+			sfx_music_random();
+		}
+
 		ships_update();
 		droid_update(&g.droid, &g.ships[g.pilot]);
 		camera_update(&g.camera, &g.ships[g.pilot], &g.droid);

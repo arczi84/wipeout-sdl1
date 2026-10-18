@@ -70,11 +70,12 @@ static void button_quit(menu_t *menu, int data) {
 static void button_music_track(menu_t *menu, int data) {
 	sfx_music_play(data);
 	sfx_music_mode(SFX_MUSIC_LOOP);
+	save.music_random = false;
+	save.is_dirty = true;
 }
 
 static void button_music_random(menu_t *menu, int data) {
-	sfx_music_play(rand_int(0, len(def.music)));
-	sfx_music_mode(SFX_MUSIC_RANDOM);
+	sfx_music_random();
 }
 
 static void button_music(menu_t *menu, int data) {

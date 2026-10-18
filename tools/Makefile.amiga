@@ -1,0 +1,35 @@
+# Run from the repository root. See README.md, AmigaOS / PiStorm3D.
+.DEFAULT_GOAL := all
+TOOLCHAIN ?= /opt/amiga-gcc16-rc16
+CC := $(TOOLCHAIN)/bin/m68k-amigaos-gcc
+MGL_SDK ?= sdk/MiniGL-v29.1/libraryroot
+SDL_ROOT ?= sdk/SDL
+SDL_LIB ?= $(SDL_ROOT)/lib/libSDL-mgl-v291-own.a
+MGL_IMPORT ?= $(MGL_SDK)/lib/libminigl_dispatch.a
+DEBUG_LIB ?= $(TOOLCHAIN)/m68k-amigaos/ndk/lib/libs/debug.lib
+BUILD_DIR ?= build/amiga-rc16
+TARGET ?= $(BUILD_DIR)/wipeout-mgl
+MGL_TEXTURE_MAX_SIZE ?= 0
+SRC := $(wildcard src/wipeout/*.c) $(addprefix src/,utils.c types.c system.c mem.c input.c render_gl_legacy.c platform_sdl.c)
+OBJ := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRC))
+CPPFLAGS := -Isrc -Isrc/wipeout -Isrc/libs -I$(MGL_SDK)/include \
+ -I$(BUILD_DIR)/include -I$(SDL_ROOT)/include -include tools/amiga-compat.h \
+ -D__MORPHOS__ -DNO_INTRO -DNO_INLINE_VARARGS -DNO_INLINE_STDARG \
+ -DGL_GLEXT_LEGACY -DAMIGA_SHARED_MINIGL -DRENDERER_GL_LEGACY \
+ -DMGL_TEXTURE_MAX_SIZE=$(MGL_TEXTURE_MAX_SIZE)
+CFLAGS := -std=gnu99 -w -fcommon -O3 -m68060 -mhard-float -fbbb=+ \
+ -ffast-math -fomit-frame-pointer -fno-strict-aliasing -noixemul
+.PHONY: all
+all: $(TARGET)
+$(BUILD_DIR)/include/.ready: $(wildcard $(SDL_ROOT)/include/*.h)
+	mkdir -p $(BUILD_DIR)/include/SDL
+	cp $(SDL_ROOT)/include/*.h $(BUILD_DIR)/include/SDL/
+	touch $@
+$(BUILD_DIR)/src/%.o: src/%.c tools/amiga-compat.h | $(BUILD_DIR)/include/.ready
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+$(TARGET): $(OBJ) $(SDL_LIB) $(MGL_IMPORT) $(DEBUG_LIB)
+	mkdir -p $(dir $@)
+	$(CC) $(OBJ) -o $@ -s -m68060 -mhard-float -fbbb=+ -noixemul \
+ -Wl,--start-group $(SDL_LIB) $(MGL_IMPORT) -Wl,--end-group -lm $(DEBUG_LIB)
+-include $(OBJ:.o=.d)

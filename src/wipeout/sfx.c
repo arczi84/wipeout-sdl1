@@ -48,7 +48,7 @@ static sfx_data_t *sources;
 static uint32_t num_sources;
 static sfx_t *nodes;
 static music_decoder_t *music;
-static void (*external_mix_cb)(uint32_t *, uint32_t len) = NULL;
+static void (*external_mix_cb)(int16_t *, uint32_t len) = NULL;
 
 void sfx_load(void) {
 	// Init decode buffer for music
@@ -233,7 +233,7 @@ uint32_t sfx_music_decode_frame(void) {
 	}
 	music->buffer_len = fread(music->buffer, 1, qoa_max_frame_size(&music->qoa), music->file);
 
-	uint32_t frame_len;
+	unsigned int frame_len;
 	qoa_decode_frame(music->buffer, music->buffer_len, &music->qoa, music->sample_data, &frame_len);
 	music->sample_data_pos = 0;
 	music->sample_data_len = frame_len;
@@ -295,6 +295,21 @@ void sfx_music_play(uint32_t index) {
 
 	music->track_index = index;
 	sfx_music_open(def.music[index].path);
+}
+
+void sfx_music_next(void) {
+	sfx_music_play((music->track_index + 1) % len(def.music));
+}
+
+void sfx_music_random(void) {
+	uint32_t index = rand_int(0, len(def.music));
+	if (len(def.music) > 1 && index == music->track_index) {
+		index = (index + 1) % len(def.music);
+	}
+	sfx_music_play(index);
+	sfx_music_mode(SFX_MUSIC_RANDOM);
+	save.music_random = true;
+	save.is_dirty = true;
 }
 
 void sfx_music_mode(sfx_music_mode_t mode) {

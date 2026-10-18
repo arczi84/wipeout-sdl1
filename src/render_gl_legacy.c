@@ -69,6 +69,19 @@
 #endif
 #define TEXTURES_MAX 2048
 
+#if defined(__MORPHOS__)
+	/* The AmigaOS hunk object format supports at most 8-byte alignment. */
+	#define RENDER_BUFFER_ALIGNMENT 8
+#else
+	#define RENDER_BUFFER_ALIGNMENT 32
+#endif
+
+/* Set to a positive value (for example 256) for hardware with a restricted
+ * maximum texture size. Zero preserves the source resolution. */
+#ifndef MGL_TEXTURE_MAX_SIZE
+	#define MGL_TEXTURE_MAX_SIZE 0
+#endif
+
 typedef struct {
 	vec2i_t size;
 	vec2_t scale;
@@ -79,7 +92,7 @@ uint16_t RENDER_NO_TEXTURE;
 
 void render_resize(vec2i_t size);
 
-static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
+static tris_t __attribute__((aligned(RENDER_BUFFER_ALIGNMENT))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
 static float screen_2d_z = -1;
 static bool render_view_is_2d = false;
@@ -157,9 +170,6 @@ void render_init(vec2i_t size) {
 	glDepthFunc(GL_LESS);
 	glDepthRange(0.0, 1.0);
 	glClearDepth(1.0);
-	mglSetZOffset(0.0f);
-	glDisable(MGL_Z_OFFSET);
-	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc (GL_GREATER, 0.0f);
 
@@ -274,9 +284,6 @@ void render_frame_prepare() {
 	glDepthFunc(GL_LESS);
 	glDepthRange(0.0, 1.0);
 	glClearDepth(1.0);
-	mglSetZOffset(0.0f);
-	glDisable(MGL_Z_OFFSET);
-	glDisable(GL_POLYGON_OFFSET_FILL);
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -313,7 +320,7 @@ void render_flush() {
 	if (render_view_is_2d) {
 		uint32_t i = 0;
 		for (; i + 1 < tris_len; i += 2) {
-			vertex_t quad[4] __attribute__((aligned(32)));
+			vertex_t quad[4] __attribute__((aligned(RENDER_BUFFER_ALIGNMENT)));
 
 			/* top-left, bottom-left, top-right, bottom-right */
 			quad[0] = tris_buffer[i].vertices[2];
@@ -422,18 +429,13 @@ void render_set_depth_test(bool enabled) {
 
 void render_set_depth_offset(float offset) {
 	render_flush();
-	//offset = 0; //mgl
 	if (offset == 0) {
-		mglSetZOffset(offset);
-		glDisable(MGL_Z_OFFSET);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		return;
 	}
-	mglSetZOffset(offset);
-	glEnable(MGL_Z_OFFSET);
+
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	// glPolygonOffset() is only present in the debug MiniGL build; mglSetZOffset()
-	// above is the native equivalent and already applied the offset.
+	glPolygonOffset(offset, 5.0);
 }
 
 void render_set_screen_position(vec2_t pos) {
@@ -772,8 +774,8 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	{
 		const uint32_t min_texture_size = 8;
 
-	#if defined(__MORPHOS__)
-		const uint32_t max_texture_size = 256;
+	#if defined(__MORPHOS__) && MGL_TEXTURE_MAX_SIZE > 0
+		const uint32_t max_texture_size = MGL_TEXTURE_MAX_SIZE;
 		uint32_t largest_side = max(tw, th);
 		/* Keep the aspect ratio when an asset exceeds the Warp3D limit. */
 		if (largest_side > max_texture_size) {

@@ -40,7 +40,10 @@ void particles_draw() {
 
 	render_set_model_mat(&mat4_identity());
 	render_set_depth_write(false);
-	render_set_blend_mode(RENDER_BLEND_LIGHTER);
+	/* PiStorm3D diagnostic/workaround: avoid the additive
+	 * GL_SRC_ALPHA, GL_ONE path, which can leave the GPU backend hung after
+	 * an explosion. */
+	render_set_blend_mode(RENDER_BLEND_NORMAL);
 	render_set_depth_offset(-32.0);
 
 	render_push_matrix();
@@ -69,4 +72,3 @@ void particles_spawn(vec3_t position, uint16_t type, vec3_t velocity, int size) 
 	p->size.x = size;
 	p->size.y = size;
 }
-

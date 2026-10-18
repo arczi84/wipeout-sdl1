@@ -10,6 +10,82 @@ More info in my blog: https://phoboslab.org/log/2023/08/rewriting-wipeout
 
 # Building
 
+## AmigaOS / PiStorm3D (MiniGL branch)
+
+This branch contains the classic AmigaOS SDL 1.2 / MiniGL port. Its active
+renderer is `src/render_gl_legacy.c`; the platform backend is
+`src/platform_sdl.c`. The general SDL2/Sokol instructions below describe the
+upstream rewrite, not this Amiga build.
+
+The current port targets **MiniGL.library v29.1, dispatch ABI 5**, with our
+patched `libSDL12-mgl` SDL 1.2 port. The SDL fixes cover BGRA32 fullscreen mode
+selection, a single shared SDL/MiniGL window/context, and input ownership.
+Use the matching patched SDL archive, not an arbitrary SDL/MiniGL build.
+The SDL source and MiniGL runtime/SDK are separate dependencies and are not
+vendored in this repository.
+
+### Cross-compiling on Linux
+
+Requirements: GNU make, an AmigaOS m68k GCC/libnix toolchain with NDK headers,
+MiniGL v29.1 SDK headers and dispatch import archive, and the patched SDL
+headers/archive. GCC 6.5 and GCC 16.2 RC16 have been used; the latest source
+snapshot was built with RC16 and GCC-6.5-built SDL/import libraries.
+
+Run from the repository root, substituting your dependency paths:
+
+```sh
+make -j8 -f tools/Makefile.amiga \
+  TOOLCHAIN=/opt/amiga-gcc16-rc16 \
+  MGL_SDK=/path/to/MiniGL-v29.1/libraryroot \
+  SDL_ROOT=/path/to/patched-SDL \
+  SDL_LIB=/path/to/libSDL-mgl-v291-own.a \
+  MGL_IMPORT=/path/to/libminigl_dispatch.a
+```
+
+`SDL_ROOT/include` must contain SDL's public headers. Keep the SDK directory
+layout intact: some headers refer to `../backend/include` relative to
+`libraryroot`. `DEBUG_LIB` can override the toolchain's NDK `debug.lib` path.
+The output is `build/amiga-rc16/wipeout-mgl`; override `BUILD_DIR` and `TARGET`
+as needed. Use a fresh build directory when changing compilers or flags.
+This dedicated Makefile avoids the historical machine-specific paths in the
+top-level Makefile and does not install libraries or executables.
+
+Game flags: `-O3 -m68060 -mhard-float -fbbb=+ -ffast-math
+-fomit-frame-pointer -fno-strict-aliasing -noixemul`, with `-fcommon`.
+There is no explicit `-mlra` override. The compatibility header supplies the
+legacy `ushort` typedef and avoids a stdio/MiniGL `dprintf` macro collision.
+`__MORPHOS__` is retained as a historical port selector; the executable is
+for classic m68k AmigaOS, not MorphOS.
+
+### Running and options
+
+Original game assets are required separately; see Running below. Example:
+
+```text
+wipeout-mgl -fullscreen 640 480 64000 32
+wipeout-mgl -window 640 480 64000 32 -log
+```
+
+The arguments are mode, width, height, render distance, and optional depth.
+PiStorm3D uses 32-bit display modes. Console output is suppressed unless
+`-log` is supplied. The system mouse pointer is hidden during play.
+
+Video Options includes SHOW FPS and VSYNC. VSYNC defaults to OFF for new or
+older saves; the selected setting is saved. When ON, the game calls
+`WaitTOF()` after swapping buffers. The FPS counter measures complete frame
+intervals, including swapping and the wait. Synchronization follows the Amiga
+display timing, not necessarily the host monitor refresh rate; reports of
+30 FPS with VSYNC remain under investigation.
+
+Texture downscaling is optional: `MGL_TEXTURE_MAX_SIZE=0` preserves source
+resolution; a positive build-time value enables a cap. Shadows use standard
+polygon offset. Music controls include M for next track and R for random
+playback, and older save layouts are accepted.
+
+Known workaround: particles currently use normal alpha blending instead of
+additive blending to avoid a reported PiStorm3D hang after explosions. This
+changes their appearance and is not a confirmed driver fix.
+
 The Wipeout rewrite supports two different platform-backends:
 [SDL2](https://github.com/libsdl-org/SDL) and
 [Sokol](https://github.com/floooh/sokol).

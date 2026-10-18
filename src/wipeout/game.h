@@ -31,6 +31,9 @@ typedef enum {
 	A_CHANGE_VIEW,
 	NUM_GAME_ACTIONS,
 
+	A_MUSIC_NEXT,
+	A_MUSIC_RANDOM,
+
 	A_MENU_UP,
 	A_MENU_DOWN,
 	A_MENU_LEFT,
@@ -254,6 +257,10 @@ typedef struct {
 
 	char highscores_name[4];
 	highscores_t highscores[NUM_RACE_CLASSES][NUM_CIRCUTS][NUM_HIGHSCORE_TABS];
+
+	// Appended to preserve the layout of older save.dat files.
+	uint32_t music_random;
+    uint32_t vsync;
 } save_t;
 
 

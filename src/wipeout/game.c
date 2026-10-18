@@ -398,10 +398,11 @@ save_t save = {
 	.music_volume = 0.5,
 	.internal_roll = 0.6,//rewrite
 	.ui_scale = 0,
-	.show_fps = false,
+	.show_fps = true,
 	.fullscreen = false,
 	.screen_res = 0,
 	.post_effect = 0,
+	.music_random = true,
 
 	.has_rapier_class = true,  // for testing; should be false in prod
 	.has_bonus_circuts = true, // for testing; should be false in prod
@@ -507,9 +508,14 @@ void game_init() {
 	uint32_t size;
 	save_t *save_file = (save_t *)platform_load_userdata("save.dat", &size);
 	if (save_file) {
-		if (size == sizeof(save_t) && save_file->magic == SAVE_DATA_MAGIC) {
+		uint32_t old_save_size = offsetof(save_t, music_random);
+        uint32_t pre_vsync_size = offsetof(save_t, vsync);
+		if ((size == sizeof(save_t) || size == pre_vsync_size || size == old_save_size) && save_file->magic == SAVE_DATA_MAGIC) {
 			printf("load save data success\n");
-			memcpy(&save, save_file, sizeof(save_t));
+			memcpy(&save, save_file, size);
+			if (size != sizeof(save_t)) {
+				save.is_dirty = true;
+			}
 		}
 		else {
 			printf("unexpected size/magic for save data");
@@ -518,6 +524,9 @@ void game_init() {
 	}
 
 	platform_set_fullscreen(save.fullscreen);
+#ifdef __AMIGA__
+    platform_set_vsync(save.vsync != 0);
+#endif
 	render_set_resolution(save.screen_res);
 	render_set_post_effect(save.post_effect);
 
@@ -552,6 +561,8 @@ void game_init() {
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_X, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_RETURN, A_MENU_START);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_ESCAPE, A_MENU_QUIT);
+	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_M, A_MUSIC_NEXT);
+	input_bind(INPUT_LAYER_SYSTEM, INPUT_KEY_R, A_MUSIC_RANDOM);
 
 	// Gamepad
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_DPAD_UP, A_MENU_UP);
@@ -602,8 +613,6 @@ void game_reset_championship() {
 }
 
 void game_update() {
-	scalar_t frame_start_time = platform_now();
-
 	int sh = render_size().y;
 	int scale = max(1, sh >=  720 ? sh / 360 : sh / 240);
 	if (save.ui_scale && save.ui_scale < scale) {
@@ -643,10 +652,4 @@ void game_update() {
 		//printf("wrote save.dat\n");
 	}
 
-	scalar_t now = platform_now();
-	g.frame_time = now - frame_start_time;
-	if (g.frame_time > 0) {
-		g.frame_rate = ((scalar_t)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
-	}
 }
-

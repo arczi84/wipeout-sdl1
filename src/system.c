@@ -12,9 +12,11 @@ static double time_scaled;
 static double time_scale = 1.0;
 static double tick_last;
 static double cycle_time = 0;
+static bool frame_sample_ready;
 
 void system_init() {
 	time_real = platform_now();
+	frame_sample_ready = false;
 	input_init();
 	render_init(platform_screen_size());
 	game_init();
@@ -33,6 +35,13 @@ void system_update(void) {
 	double time_real_now = platform_now();
 	double real_delta = time_real_now - time_real;
 	time_real = time_real_now;
+	// Start-to-start timing includes presentation and the platform's VSYNC wait.
+	// Skip the first sample, which includes initialization rather than a frame.
+	if (frame_sample_ready && real_delta > 0) {
+		g.frame_time = real_delta;
+		g.frame_rate = g.frame_rate * 0.95 + (1.0 / real_delta) * 0.05;
+	}
+	frame_sample_ready = true;
 	tick_last = min(real_delta, 0.1) * time_scale;
 	time_scaled += tick_last;
 
